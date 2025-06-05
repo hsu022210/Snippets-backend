@@ -1,3 +1,148 @@
+from django.contrib.auth.models import User
 from django.test import TestCase
+from rest_framework.test import APIClient, APIRequestFactory
+from rest_framework import status
+from rest_framework_simplejwt.tokens import RefreshToken
+from .models import Snippet
+from .views import SnippetViewSet, UserViewSet
 
-# Create your tests here.
+class SnippetTests(TestCase):
+    def setUp(self):
+        self.factory = APIRequestFactory()
+        self.client = APIClient()
+        
+        # Create users
+        self.user1 = User.objects.create_user(
+            username='user1',
+            email='user1@example.com',
+            password='password1'
+        )
+        self.user2 = User.objects.create_user(
+            username='user2',
+            email='user2@example.com',
+            password='password2'
+        )
+        
+        # Create snippets
+        self.snippet1 = Snippet.objects.create(
+            title='Snippet 1',
+            code='print("Hello")',
+            owner=self.user1
+        )
+        self.snippet2 = Snippet.objects.create(
+            title='Snippet 2',
+            code='print("World")',
+            owner=self.user2
+        )
+        
+        # Create JWT tokens
+        refresh1 = RefreshToken.for_user(self.user1)
+        self.token1 = f'Bearer {refresh1.access_token}'
+        
+        refresh2 = RefreshToken.for_user(self.user2)
+        self.token2 = f'Bearer {refresh2.access_token}'
+
+    def test_list_snippets_authenticated(self):
+        """Test listing snippets when authenticated - should only show user's own snippets"""
+        self.client.credentials(HTTP_AUTHORIZATION=self.token1)
+        response = self.client.get('/snippets/')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data), 1)
+        self.assertEqual(response.data[0]['title'], 'Snippet 1')
+
+    def test_list_snippets_unauthenticated(self):
+        """Test listing snippets without authentication"""
+        response = self.client.get('/snippets/')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data), 0)  # Unauthenticated users see no snippets
+
+    def test_create_snippet_authenticated(self):
+        """Test creating a new snippet when authenticated"""
+        self.client.credentials(HTTP_AUTHORIZATION=self.token1)
+        data = {
+            'title': 'New Snippet',
+            'code': 'console.log("New")',
+            'language': 'javascript'
+        }
+        response = self.client.post('/snippets/', data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(Snippet.objects.count(), 3)
+        self.assertTrue(Snippet.objects.filter(title='New Snippet').exists())
+
+    def test_create_snippet_unauthenticated(self):
+        """Test creating a snippet without authentication"""
+        data = {'title': 'Unauthorized', 'code': 'test'}
+        response = self.client.post('/snippets/', data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_retrieve_snippet_owner(self):
+        """Test retrieving a snippet by its owner"""
+        self.client.credentials(HTTP_AUTHORIZATION=self.token1)
+        response = self.client.get(f'/snippets/{self.snippet1.id}/')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['title'], 'Snippet 1')
+
+    def test_retrieve_snippet_non_owner(self):
+        """Test retrieving a snippet by a non-owner"""
+        self.client.credentials(HTTP_AUTHORIZATION=self.token1)
+        response = self.client.get(f'/snippets/{self.snippet2.id}/')
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_update_snippet_owner(self):
+        """Test updating a snippet by its owner"""
+        self.client.credentials(HTTP_AUTHORIZATION=self.token1)
+        data = {'title': 'Updated Snippet'}
+        response = self.client.patch(f'/snippets/{self.snippet1.id}/', data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.snippet1.refresh_from_db()
+        self.assertEqual(self.snippet1.title, 'Updated Snippet')
+
+    def test_update_snippet_non_owner(self):
+        """Test updating a snippet by a non-owner"""
+        self.client.credentials(HTTP_AUTHORIZATION=self.token1)
+        data = {'title': 'Should Not Update'}
+        response = self.client.patch(f'/snippets/{self.snippet2.id}/', data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_delete_snippet_owner(self):
+        """Test deleting a snippet by its owner"""
+        self.client.credentials(HTTP_AUTHORIZATION=self.token1)
+        response = self.client.delete(f'/snippets/{self.snippet1.id}/')
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+        self.assertEqual(Snippet.objects.count(), 1)
+
+    def test_delete_snippet_non_owner(self):
+        """Test deleting a snippet by a non-owner"""
+        self.client.credentials(HTTP_AUTHORIZATION=self.token1)
+        response = self.client.delete(f'/snippets/{self.snippet2.id}/')
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertEqual(Snippet.objects.count(), 2)
+
+    def test_snippet_highlight(self):
+        """Test the snippet highlight action"""
+        self.client.credentials(HTTP_AUTHORIZATION=self.token1)
+        response = self.client.get(f'/snippets/{self.snippet1.id}/highlight/')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertIn('print("Hello")', response.content.decode())
+
+class UserViewTests(TestCase):
+    def setUp(self):
+        self.client = APIClient()
+        self.user = User.objects.create_user(
+            username='testuser',
+            email='test@example.com',
+            password='testpassword'
+        )
+    
+    def test_user_list(self):
+        """Test listing users"""
+        response = self.client.get('/users/')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data), 1)
+        self.assertEqual(response.data[0]['username'], 'testuser')
+
+    def test_user_detail(self):
+        """Test retrieving user details"""
+        response = self.client.get(f'/users/{self.user.id}/')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['username'], 'testuser')
