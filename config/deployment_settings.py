@@ -27,20 +27,20 @@ MIDDLEWARE = [
 #     "http://127.0.0.1:3000",
 # ]
 
-STATIC_URL = '/static/'
+# STATIC_URL = '/static/'
 
-if not DEBUG:
-    STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+# if not DEBUG:
+#     STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
-    STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+#     STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 STORAGES = {
     "default":{
         "BACKEND" : "django.core.files.storage.FileSystemStorage",
     },
-    # "staticfiles": {
-    #     "BACKEND" : "whitenoise.storage.CompressedStaticFilesStorage",
-    # },
+    "staticfiles": {
+        "BACKEND" : "whitenoise.storage.CompressedStaticFilesStorage",
+    },
 
 }
 
