@@ -4,7 +4,9 @@ certifi==2025.4.26
 charset-normalizer==3.4.2
 defusedxml==0.7.1
 Django==4.2.21
+django-cors-headers==4.7.0
 djangorestframework==3.16.0
+djangorestframework_simplejwt==5.5.0
 drf-spectacular==0.28.0
 drf-yasg==1.21.10
 httpie==3.2.4
@@ -17,6 +19,7 @@ mdurl==0.1.2
 multidict==6.4.4
 packaging==25.0
 Pygments==2.19.1
+PyJWT==2.9.0
 PySocks==1.7.1
 pytz==2025.2
 PyYAML==6.0.2
