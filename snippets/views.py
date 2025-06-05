@@ -26,7 +26,6 @@ class SnippetViewSet(viewsets.ModelViewSet):
 
     Additionally we also provide an extra `highlight` action.
     """
-    queryset = Snippet.objects.all()
     serializer_class = SnippetSerializer
     permission_classes = [permissions.IsAuthenticatedOrReadOnly,
                           IsOwnerOrReadOnly]
@@ -38,6 +37,9 @@ class SnippetViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         serializer.save(owner=self.request.user)
+    
+    def get_queryset(self):
+        return Snippet.objects.filter(owner=self.request.user)
 
 # class SnippetList(APIView):
 #     """
@@ -46,7 +48,7 @@ class SnippetViewSet(viewsets.ModelViewSet):
 #     permission_classes = [permissions.IsAuthenticatedOrReadOnly]
 
 #     def get(self, request, format=None):
-#         snippets = Snippet.objects.all()
+#         snippets = Snippet.objects.filter(owner=self.request.user)
 #         serializer = SnippetSerializer(snippets, many=True, context={'request': request})
 #         return Response(serializer.data)
 
