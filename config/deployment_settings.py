@@ -21,11 +21,10 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-# # CORS settings
-# CORS_ALLOWED_ORIGINS = [
-#     "http://localhost:3000",  # React default port
-#     "http://127.0.0.1:3000",
-# ]
+# CORS settings
+CORS_ALLOWED_ORIGINS = [
+    os.environ.get('FRONTEND_URL')
+]
 
 # STATIC_URL = '/static/'
 
