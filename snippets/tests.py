@@ -65,6 +65,23 @@ class SnippetTests(TestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data['results']), 0)  # Unauthenticated users see no snippets
 
+    def test_list_snippets_pagination(self):
+        """Test snippet list pagination."""
+        # Create 15 snippets for user1
+        for i in range(15):
+            Snippet.objects.create(
+                title=f'Pagination Test {i}',
+                code=f'print("Test {i}")',
+                owner=self.user1
+            )
+        
+        self.client.credentials(HTTP_AUTHORIZATION=self.token1)
+        response = self.client.get('/snippets/')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data['results']), 10)  # Default page size
+        self.assertTrue('next' in response.data)
+        self.assertTrue('previous' in response.data)
+
     # Create tests
     def test_create_snippet_authenticated(self):
         """Test creating a new snippet when authenticated."""
@@ -85,6 +102,16 @@ class SnippetTests(TestCase):
         response = self.client.post('/snippets/', data, format='json')
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
+    def test_create_snippet_invalid_data(self):
+        """Test creating a snippet with invalid data."""
+        self.client.credentials(HTTP_AUTHORIZATION=self.token1)
+        data = {
+            'code': ''    # Empty code
+        }
+        response = self.client.post('/snippets/', data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('code', response.data)
+
     # Retrieve tests
     def test_retrieve_snippet_owner(self):
         """Test retrieving a snippet by its owner."""
@@ -97,6 +124,12 @@ class SnippetTests(TestCase):
         """Test retrieving a snippet by a non-owner."""
         self.client.credentials(HTTP_AUTHORIZATION=self.token1)
         response = self.client.get(f'/snippets/{self.snippet2.id}/')
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_retrieve_nonexistent_snippet(self):
+        """Test retrieving a snippet that doesn't exist."""
+        self.client.credentials(HTTP_AUTHORIZATION=self.token1)
+        response = self.client.get('/snippets/99999/')
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
     # Update tests
@@ -116,6 +149,16 @@ class SnippetTests(TestCase):
         response = self.client.patch(f'/snippets/{self.snippet2.id}/', data, format='json')
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
+    def test_update_snippet_invalid_data(self):
+        """Test updating a snippet with invalid data."""
+        self.client.credentials(HTTP_AUTHORIZATION=self.token1)
+        data = {
+            'code': ''    # Empty code
+        }
+        response = self.client.patch(f'/snippets/{self.snippet1.id}/', data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('code', response.data)
+
     # Delete tests
     def test_delete_snippet_owner(self):
         """Test deleting a snippet by its owner."""
@@ -131,6 +174,12 @@ class SnippetTests(TestCase):
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
         self.assertEqual(Snippet.objects.count(), 2)
 
+    def test_delete_nonexistent_snippet(self):
+        """Test deleting a snippet that doesn't exist."""
+        self.client.credentials(HTTP_AUTHORIZATION=self.token1)
+        response = self.client.delete('/snippets/99999/')
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
     # Special action tests
     def test_snippet_highlight(self):
         """Test the snippet highlight action."""
@@ -139,6 +188,12 @@ class SnippetTests(TestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertIn('<span class="nb">print</span>', response.content.decode())
         self.assertIn('<span class="s2">&quot;Hello&quot;</span>', response.content.decode())
+
+    def test_snippet_highlight_nonexistent(self):
+        """Test highlighting a snippet that doesn't exist."""
+        self.client.credentials(HTTP_AUTHORIZATION=self.token1)
+        response = self.client.get('/snippets/99999/highlight/')
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
 
 class UserViewTests(TestCase):
@@ -166,9 +221,38 @@ class UserViewTests(TestCase):
         self.assertEqual(len(response.data['results']), 1)
         self.assertEqual(response.data['results'][0]['username'], 'testuser')
 
+    def test_user_list_pagination(self):
+        """Test user list pagination."""
+        # Create 15 users
+        for i in range(15):
+            User.objects.create_user(
+                username=f'user{i}',
+                email=f'user{i}@example.com',
+                password='password'
+            )
+        
+        self.client.credentials(HTTP_AUTHORIZATION=self.token)
+        response = self.client.get('/users/')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data['results']), 10)  # Default page size
+        self.assertTrue('next' in response.data)
+        self.assertTrue('previous' in response.data)
+
     def test_user_detail(self):
         """Test retrieving user details."""
         self.client.credentials(HTTP_AUTHORIZATION=self.token)
         response = self.client.get(f'/users/{self.user.id}/')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data['username'], 'testuser')
+
+    def test_user_detail_nonexistent(self):
+        """Test retrieving details of a non-existent user."""
+        self.client.credentials(HTTP_AUTHORIZATION=self.token)
+        response = self.client.get('/users/99999/')
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_user_detail_invalid_id(self):
+        """Test retrieving user details with an invalid ID."""
+        self.client.credentials(HTTP_AUTHORIZATION=self.token)
+        response = self.client.get('/users/invalid/')
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)

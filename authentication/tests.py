@@ -9,7 +9,6 @@ from .serializers import RegisterSerializer
 
 class AuthenticationTests(TestCase):
     def setUp(self):
-        self.factory = APIRequestFactory()
         self.client = APIClient()
         self.user = User.objects.create_user(
             username='testuser',
@@ -47,10 +46,7 @@ class AuthenticationTests(TestCase):
             'password2': 'password2'  # Mismatched passwords
         }
         
-        # Using APIRequestFactory for more control
-        request = self.factory.post(url, data, format='json')
-        view = RegisterView.as_view()
-        response = view(request)
+        response = self.client.post(url, data, format='json')
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertIn('password', response.data)
 
