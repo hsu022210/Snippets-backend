@@ -11,6 +11,10 @@ class SnippetTests(TestCase):
         self.factory = APIRequestFactory()
         self.client = APIClient()
         
+        # Clean up any existing data
+        Snippet.objects.all().delete()
+        User.objects.all().delete()
+        
         # Create users
         self.user1 = User.objects.create_user(
             username='user1',
@@ -47,14 +51,14 @@ class SnippetTests(TestCase):
         self.client.credentials(HTTP_AUTHORIZATION=self.token1)
         response = self.client.get('/snippets/')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data), 1)
-        self.assertEqual(response.data[0]['title'], 'Snippet 1')
+        self.assertEqual(len(response.data['results']), 1)
+        self.assertEqual(response.data['results'][0]['title'], 'Snippet 1')
 
     def test_list_snippets_unauthenticated(self):
         """Test listing snippets without authentication"""
         response = self.client.get('/snippets/')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data), 0)  # Unauthenticated users see no snippets
+        self.assertEqual(len(response.data['results']), 0)  # Unauthenticated users see no snippets
 
     def test_create_snippet_authenticated(self):
         """Test creating a new snippet when authenticated"""
@@ -123,7 +127,8 @@ class SnippetTests(TestCase):
         self.client.credentials(HTTP_AUTHORIZATION=self.token1)
         response = self.client.get(f'/snippets/{self.snippet1.id}/highlight/')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertIn('print("Hello")', response.content.decode())
+        self.assertIn('<span class="nb">print</span>', response.content.decode())
+        self.assertIn('<span class="s2">&quot;Hello&quot;</span>', response.content.decode())
 
 class UserViewTests(TestCase):
     def setUp(self):
@@ -138,8 +143,8 @@ class UserViewTests(TestCase):
         """Test listing users"""
         response = self.client.get('/users/')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data), 1)
-        self.assertEqual(response.data[0]['username'], 'testuser')
+        self.assertEqual(len(response.data['results']), 1)
+        self.assertEqual(response.data['results'][0]['username'], 'testuser')
 
     def test_user_detail(self):
         """Test retrieving user details"""
