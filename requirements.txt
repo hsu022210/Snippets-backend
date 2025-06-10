@@ -27,6 +27,7 @@ psycopg2-binary==2.9.10
 Pygments==2.19.1
 PyJWT==2.9.0
 PySocks==1.7.1
+python-dotenv==1.1.0
 pytz==2025.2
 PyYAML==6.0.2
 referencing==0.36.2
