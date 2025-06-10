@@ -2,7 +2,7 @@ set -o errexit
 
 pip install -r requirements.txt
 
-python manage.py reset_db --noinput
+python manage.py reset_db -c --noinput
 
 python manage.py collectstatic --no-input
 
