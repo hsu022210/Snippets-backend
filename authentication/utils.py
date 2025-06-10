@@ -2,6 +2,7 @@ from django.core.mail import send_mail
 from django.conf import settings
 from django.template.loader import render_to_string
 from django.utils.html import strip_tags
+import os
 
 def send_welcome_email(user_email, username):
     """
@@ -10,6 +11,7 @@ def send_welcome_email(user_email, username):
     subject = 'Welcome to Snippets!'
     html_message = render_to_string('email/welcome_email.html', {
         'username': username,
+        'hostname': os.environ.get('RENDER_EXTERNAL_HOSTNAME', 'localhost:3000'),
     })
     plain_message = strip_tags(html_message)
     
