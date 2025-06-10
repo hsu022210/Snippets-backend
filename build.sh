@@ -2,7 +2,16 @@ set -o errexit
 
 pip install -r requirements.txt
 
-python manage.py reset_db -c --noinput
+#!/bin/bash
+
+DB_NAME="snippets_db_ut3z"
+DB_USER="postgres"  # or your DB superuser
+
+echo "Terminating all connections to $DB_NAME..."
+psql -U $DB_USER -d postgres -c "SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = '$DB_NAME' AND pid <> pg_backend_pid();"
+
+echo "Resetting database..."
+python manage.py reset_db --noinput
 
 python manage.py collectstatic --no-input
 
