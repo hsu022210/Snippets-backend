@@ -8,7 +8,8 @@ DB_NAME="snippets_db_ut3z"
 DB_USER="postgres"  # or your DB superuser
 
 echo "Terminating all connections to $DB_NAME..."
-psql -U $DB_USER -d postgres -c "SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = '$DB_NAME' AND pid <> pg_backend_pid();"
+psql -h $DATABASE_URL -U postgres -d postgres -c "SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = 'snippets_db_ut3z' AND pid <> pg_backend_pid();"
+
 
 echo "Resetting database..."
 python manage.py reset_db --noinput
