@@ -8,7 +8,7 @@ def send_welcome_email(user_email, username):
     """
     Send a welcome email to newly registered users
     """
-    subject = 'Welcome to Snippets!'
+    subject = 'Welcome to Code Snippets!'
     html_message = render_to_string('email/welcome_email.html', {
         'username': username,
         'frontend_url': os.environ.get('FRONTEND_URL', 'http://localhost:3000'),
