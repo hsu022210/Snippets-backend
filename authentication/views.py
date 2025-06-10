@@ -2,7 +2,7 @@ import os
 import logging
 from rest_framework import generics, permissions, status
 from rest_framework.response import Response
-from django.contrib.auth.models import User
+from django.contrib.auth import get_user_model
 from .serializers import UserSerializer, RegisterSerializer
 from rest_framework.views import APIView
 from .utils import send_welcome_email
@@ -12,9 +12,12 @@ from django.core.mail import send_mail
 from django.conf import settings
 from django.template.loader import render_to_string
 from django.utils.html import strip_tags
+from rest_framework_simplejwt.tokens import RefreshToken
 
 # Set up logging
 logger = logging.getLogger(__name__)
+
+User = get_user_model()
 
 # Create your views here.
 
@@ -51,6 +54,39 @@ class LogoutView(APIView):
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 
+class CustomLoginView(APIView):
+    permission_classes = (permissions.AllowAny,)
+
+    def post(self, request):
+        email = request.data.get('email')
+        password = request.data.get('password')
+
+        if not email or not password:
+            return Response(
+                {"error": "Please provide both email and password."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        try:
+            user = User.objects.get(email=email)
+            if user.check_password(password):
+                refresh = RefreshToken.for_user(user)
+                return Response({
+                    'access': str(refresh.access_token),
+                    'refresh': str(refresh)
+                })
+            else:
+                return Response(
+                    {"error": "Invalid credentials."},
+                    status=status.HTTP_401_UNAUTHORIZED
+                )
+        except User.DoesNotExist:
+            return Response(
+                {"error": "Invalid credentials."},
+                status=status.HTTP_401_UNAUTHORIZED
+            )
+
+
 class CustomPasswordResetRequest(ResetPasswordRequestToken):
     def post(self, request, *args, **kwargs):
         response = super().post(request, *args, **kwargs)
@@ -81,6 +117,7 @@ class CustomPasswordResetRequest(ResetPasswordRequestToken):
                     fail_silently=False,
                 )
         return response
+
 
 class CustomPasswordResetConfirm(ResetPasswordConfirm):
     def post(self, request, *args, **kwargs):

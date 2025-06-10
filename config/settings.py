@@ -37,7 +37,7 @@ ALLOWED_HOSTS = []
 # Application definition
 
 INSTALLED_APPS = [
-    'django.contrib.admin',
+    # 'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
@@ -50,6 +50,7 @@ INSTALLED_APPS = [
     'authentication',
     'corsheaders',
     'django_rest_passwordreset',
+    'django_extensions',
 ]
 
 MIDDLEWARE = [
@@ -250,3 +251,6 @@ DJANGO_REST_PASSWORDRESET_TOKEN_CONFIG = {
 }
 
 DJANGO_REST_MULTITOKENAUTH_RESET_TOKEN_EXPIRY_TIME = 24  # hours
+
+# Custom user model
+AUTH_USER_MODEL = 'authentication.CustomUser'

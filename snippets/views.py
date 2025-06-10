@@ -8,9 +8,11 @@ from django.http import Http404
 from rest_framework import status, renderers, generics, permissions, viewsets
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from django.contrib.auth.models import User
+from django.contrib.auth import get_user_model
 from rest_framework.decorators import api_view, action
 from rest_framework.reverse import reverse
+
+User = get_user_model()
 
 # @api_view(['GET'])
 # def api_root(request, format=None):
