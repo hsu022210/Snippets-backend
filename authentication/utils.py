@@ -11,7 +11,7 @@ def send_welcome_email(user_email, username):
     subject = 'Welcome to Snippets!'
     html_message = render_to_string('email/welcome_email.html', {
         'username': username,
-        'hostname': os.environ.get('RENDER_EXTERNAL_HOSTNAME', 'localhost:3000'),
+        'hostname': os.environ.get('FRONTEND_URL', 'localhost:3000'),
     })
     plain_message = strip_tags(html_message)
     
