@@ -43,7 +43,8 @@ class SnippetViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         if self.request.user.is_authenticated:
             return Snippet.objects.filter(owner=self.request.user)
-        return Snippet.objects.none()
+        # For unauthenticated users, return all snippets
+        return Snippet.objects.all()
 
 # class SnippetList(APIView):
 #     """
