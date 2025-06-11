@@ -57,7 +57,8 @@ class RegistrationTests(TestCase):
         
         response = self.client.post(self.url, data, format='json')
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertIn('password', response.data)
+        self.assertIn('detail', response.data)
+        self.assertIn('password', response.data['detail'])
 
     def test_register_missing_required_fields(self):
         """Test registration with missing required fields."""
@@ -69,8 +70,9 @@ class RegistrationTests(TestCase):
         
         response = self.client.post(self.url, data, format='json')
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertIn('email', response.data)
-        self.assertIn('password2', response.data)
+        self.assertIn('detail', response.data)
+        self.assertIn('email', response.data['detail'])
+        self.assertIn('password2', response.data['detail'])
 
 
 class UserDetailTests(AuthenticationTestMixin, TestCase):
