@@ -72,7 +72,9 @@ class SnippetListTests(SnippetTestMixin, TestCase):
         """Test listing snippets without authentication."""
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data['results']), 0)
+        self.assertEqual(len(response.data['results']), 2)  # Should see all snippets
+        self.assertEqual(response.data['results'][0]['title'], 'Snippet 1')
+        self.assertEqual(response.data['results'][1]['title'], 'Snippet 2')
 
     def test_list_snippets_pagination(self):
         """Test snippet list pagination."""
@@ -229,7 +231,9 @@ class SnippetHighlightTests(SnippetTestMixin, TestCase):
     def test_snippet_highlight_unauthenticated(self):
         """Test highlighting a snippet without authentication."""
         response = self.client.get(self.url)
-        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertIn('<span class="nb">print</span>', response.content.decode())
+        self.assertIn('<span class="s2">&quot;Hello&quot;</span>', response.content.decode())
 
 
 class UserViewTests(TestCase):
