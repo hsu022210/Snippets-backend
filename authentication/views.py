@@ -13,6 +13,7 @@ from django.conf import settings
 from django.template.loader import render_to_string
 from django.utils.html import strip_tags
 from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework import serializers
 
 # Set up logging
 logger = logging.getLogger(__name__)
@@ -26,10 +27,29 @@ class RegisterView(generics.CreateAPIView):
     permission_classes = (permissions.AllowAny,)
     serializer_class = RegisterSerializer
 
+    def create(self, request, *args, **kwargs):
+        try:
+            response = super().create(request, *args, **kwargs)
+            return Response({
+                "message": "User registered successfully",
+                "user": response.data
+            }, status=status.HTTP_201_CREATED)
+        except serializers.ValidationError as e:
+            return Response({"detail": e.detail}, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            return Response(
+                {"detail": str(e)},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
     def perform_create(self, serializer):
         user = serializer.save()
         # Send welcome email
-        send_welcome_email(user.email, user.username)
+        try:
+            send_welcome_email(user.email, user.username)
+        except Exception as e:
+            # Log the error but don't fail the registration
+            logger.error(f"Failed to send welcome email: {str(e)}")
         return user
 
 
