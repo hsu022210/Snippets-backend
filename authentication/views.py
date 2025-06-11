@@ -14,6 +14,7 @@ from django.template.loader import render_to_string
 from django.utils.html import strip_tags
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework import serializers
+from rest_framework.renderers import JSONRenderer
 
 # Set up logging
 logger = logging.getLogger(__name__)
@@ -26,6 +27,7 @@ class RegisterView(generics.CreateAPIView):
     queryset = User.objects.all()
     permission_classes = (permissions.AllowAny,)
     serializer_class = RegisterSerializer
+    renderer_classes = [JSONRenderer]
 
     def create(self, request, *args, **kwargs):
         try:
