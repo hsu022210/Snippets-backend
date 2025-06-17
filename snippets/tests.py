@@ -73,8 +73,8 @@ class SnippetListTests(SnippetTestMixin, TestCase):
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data['results']), 2)  # Should see all snippets
-        self.assertEqual(response.data['results'][0]['title'], 'Snippet 1')
-        self.assertEqual(response.data['results'][1]['title'], 'Snippet 2')
+        self.assertEqual(response.data['results'][0]['title'], 'Snippet 2')
+        self.assertEqual(response.data['results'][1]['title'], 'Snippet 1')
 
     def test_list_snippets_pagination(self):
         """Test snippet list pagination."""

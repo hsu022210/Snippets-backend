@@ -24,7 +24,7 @@ class Snippet(models.Model):
     highlighted = models.TextField()
 
     class Meta:
-        ordering = ['created']
+        ordering = ['-created']
 
     def save(self, *args, **kwargs):
         """
