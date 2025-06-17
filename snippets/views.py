@@ -1,6 +1,5 @@
 from django.shortcuts import render
-
-# Create your views here.
+from django_filters import rest_framework as filters
 from snippets.models import Snippet
 from snippets.serializers import SnippetSerializer, UserSerializer
 from snippets.permissions import IsOwnerOrReadOnly
@@ -11,6 +10,7 @@ from rest_framework.response import Response
 from django.contrib.auth import get_user_model
 from rest_framework.decorators import api_view, action
 from rest_framework.reverse import reverse
+from datetime import datetime, timedelta
 
 User = get_user_model()
 
@@ -20,6 +20,15 @@ User = get_user_model()
 #         'users': reverse('user-list', request=request, format=format),
 #         'snippets': reverse('snippet-list', request=request, format=format)
 #     })
+
+class SnippetFilter(filters.FilterSet):
+    language = filters.CharFilter(lookup_expr='iexact')
+    created_after = filters.DateTimeFilter(field_name='created', lookup_expr='gte')
+    created_before = filters.DateTimeFilter(field_name='created', lookup_expr='lte')
+
+    class Meta:
+        model = Snippet
+        fields = ['language', 'created_after', 'created_before']
 
 class SnippetViewSet(viewsets.ModelViewSet):
     """
@@ -31,6 +40,8 @@ class SnippetViewSet(viewsets.ModelViewSet):
     serializer_class = SnippetSerializer
     permission_classes = [permissions.IsAuthenticatedOrReadOnly,
                           IsOwnerOrReadOnly]
+    filterset_class = SnippetFilter
+    filter_backends = (filters.DjangoFilterBackend,)
 
     @action(detail=True, renderer_classes=[renderers.StaticHTMLRenderer])
     def highlight(self, request, *args, **kwargs):

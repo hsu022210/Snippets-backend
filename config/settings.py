@@ -44,11 +44,12 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework',
-    # 'drf_yasg',
+    'rest_framework_simplejwt',
+    'corsheaders',
     'drf_spectacular',
+    'django_filters',
     'snippets',
     'authentication',
-    'corsheaders',
     'django_rest_passwordreset',
     'django_extensions',
 ]
@@ -150,6 +151,9 @@ REST_FRAMEWORK = {
         'rest_framework.parsers.JSONParser',
         'rest_framework.parsers.FormParser',
         'rest_framework.parsers.MultiPartParser'
+    ],
+    'DEFAULT_FILTER_BACKENDS': [
+        'django_filters.rest_framework.DjangoFilterBackend',
     ],
     'EXCEPTION_HANDLER': 'rest_framework.views.exception_handler',
 }
