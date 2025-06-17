@@ -77,7 +77,7 @@ class SnippetListTests(SnippetTestMixin, TestCase):
         self.assertEqual(response.data['results'][1]['title'], 'Snippet 1')
 
     def test_list_snippets_pagination(self):
-        """Test snippet list pagination."""
+        """Test snippet list pagination with default page size."""
         # Create 15 snippets for user1
         for i in range(15):
             Snippet.objects.create(
@@ -90,6 +90,64 @@ class SnippetListTests(SnippetTestMixin, TestCase):
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data['results']), 10)  # Default page size
+        self.assertTrue('next' in response.data)
+        self.assertTrue('previous' in response.data)
+
+    def test_list_snippets_custom_page_size(self):
+        """Test snippet list pagination with custom page size."""
+        # Create 15 snippets for user1
+        for i in range(15):
+            Snippet.objects.create(
+                title=f'Custom Page Size Test {i}',
+                code=f'print("Test {i}")',
+                owner=self.user1
+            )
+        
+        self.client.credentials(HTTP_AUTHORIZATION=self.token1)
+        response = self.client.get(f'{self.url}?page_size=6')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data['results']), 6)  # Custom page size
+        self.assertTrue('next' in response.data)
+        self.assertTrue('previous' in response.data)
+
+    def test_list_snippets_page_size_limits(self):
+        """Test snippet list pagination with page size limits."""
+        # Create 150 snippets for user1 to test max page size
+        for i in range(150):
+            Snippet.objects.create(
+                title=f'Page Size Limits Test {i}',
+                code=f'print("Test {i}")',
+                owner=self.user1
+            )
+        
+        self.client.credentials(HTTP_AUTHORIZATION=self.token1)
+        
+        # Test minimum page size (should use default)
+        response = self.client.get(f'{self.url}?page_size=0')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data['results']), 10)  # Default page size
+        
+        # Test maximum page size
+        response = self.client.get(f'{self.url}?page_size=101')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data['results']), 100)  # Max page size
+
+    def test_list_snippets_pagination_with_filters(self):
+        """Test snippet list pagination with filters."""
+        # Create 15 snippets for user1 with different languages
+        for i in range(15):
+            Snippet.objects.create(
+                title=f'Filtered Pagination Test {i}',
+                code=f'print("Test {i}")',
+                language='python' if i % 2 == 0 else 'javascript',
+                owner=self.user1
+            )
+        
+        self.client.credentials(HTTP_AUTHORIZATION=self.token1)
+        response = self.client.get(f'{self.url}?language=python&page_size=6')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data['results']), 6)  # Custom page size
+        self.assertTrue(all(s['language'] == 'python' for s in response.data['results']))
         self.assertTrue('next' in response.data)
         self.assertTrue('previous' in response.data)
 
