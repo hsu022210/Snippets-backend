@@ -25,10 +25,12 @@ class SnippetFilter(filters.FilterSet):
     language = filters.CharFilter(lookup_expr='iexact')
     created_after = filters.DateTimeFilter(field_name='created', lookup_expr='gte')
     created_before = filters.DateTimeFilter(field_name='created', lookup_expr='lte')
+    search_title = filters.CharFilter(field_name='title', lookup_expr='icontains')
+    search_code = filters.CharFilter(field_name='code', lookup_expr='icontains')
 
     class Meta:
         model = Snippet
-        fields = ['language', 'created_after', 'created_before']
+        fields = ['language', 'created_after', 'created_before', 'search_title', 'search_code']
 
 class SnippetViewSet(viewsets.ModelViewSet):
     """
