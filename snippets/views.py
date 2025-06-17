@@ -3,6 +3,7 @@ from django_filters import rest_framework as filters
 from snippets.models import Snippet
 from snippets.serializers import SnippetSerializer, UserSerializer
 from snippets.permissions import IsOwnerOrReadOnly
+from snippets.pagination import SnippetPagination
 from django.http import Http404
 from rest_framework import status, renderers, generics, permissions, viewsets
 from rest_framework.views import APIView
@@ -44,6 +45,7 @@ class SnippetViewSet(viewsets.ModelViewSet):
                           IsOwnerOrReadOnly]
     filterset_class = SnippetFilter
     filter_backends = (filters.DjangoFilterBackend,)
+    pagination_class = SnippetPagination
 
     @action(detail=True, renderer_classes=[renderers.StaticHTMLRenderer])
     def highlight(self, request, *args, **kwargs):
