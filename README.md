@@ -303,17 +303,11 @@ python manage.py test
 - SQL injection protection
 - XSS protection
 
-## 🤝 Contributing
+## 📄 License
 
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add some amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
+**Copyright Notice**: This project and its codebase are the intellectual property of Alec Hsu. This project should not be copied, reproduced, distributed, or used in any form without explicit written permission from the author. All rights are reserved.
 
-## 📄 Copyright Notice
-
-**IMPORTANT**: This project is proprietary and confidential. This code, documentation, and all associated materials are protected by copyright and other intellectual property laws. This project should not be copied, distributed, modified, or used in any way without explicit written permission from the copyright holder. Any unauthorized use, reproduction, or distribution of this project may result in legal action.
+The code, design, and implementation are protected by copyright law. Unauthorized use, copying, or distribution of this project or any of its components is strictly prohibited and may result in legal action.
 
 ## 🆘 Support
 
