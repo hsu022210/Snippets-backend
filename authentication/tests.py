@@ -5,8 +5,7 @@ from django.urls import reverse
 from rest_framework.test import APIClient
 from rest_framework import status
 from rest_framework_simplejwt.tokens import RefreshToken
-from unittest.mock import patch, MagicMock
-from django.core import mail
+from unittest.mock import patch
 from django_rest_passwordreset.models import ResetPasswordToken
 
 User = get_user_model()

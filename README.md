@@ -1,5 +1,7 @@
 # Snippets Backend API
 
+**🌐 [Live API Documentation](https://snippets-backend-69z8.onrender.com/swagger/)**
+
 A robust Django REST API for managing and sharing code snippets with syntax highlighting, user authentication, and comprehensive API documentation.
 
 ## 🚀 Features
@@ -323,4 +325,4 @@ For support and questions:
 - Added JWT authentication
 - Added syntax highlighting
 - Added API documentation
-- Added password reset functionality 
+- Added password reset functionality
