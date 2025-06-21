@@ -12,6 +12,16 @@ from django.contrib.auth import get_user_model
 from rest_framework.decorators import api_view, action
 from rest_framework.reverse import reverse
 from datetime import datetime, timedelta
+from .schemas import (
+    SNIPPET_LIST_SCHEMA,
+    SNIPPET_CREATE_SCHEMA,
+    SNIPPET_DETAIL_SCHEMA,
+    SNIPPET_UPDATE_SCHEMA,
+    SNIPPET_DELETE_SCHEMA,
+    SNIPPET_HIGHLIGHT_SCHEMA,
+    USER_LIST_SCHEMA,
+    USER_DETAIL_SCHEMA,
+)
 
 User = get_user_model()
 
@@ -23,6 +33,8 @@ User = get_user_model()
 #     })
 
 class SnippetFilter(filters.FilterSet):
+    """Filter class for Snippet model with various filtering options."""
+    
     language = filters.CharFilter(lookup_expr='iexact')
     created_after = filters.DateTimeFilter(field_name='created', lookup_expr='gte')
     created_before = filters.DateTimeFilter(field_name='created', lookup_expr='lte')
@@ -33,33 +45,75 @@ class SnippetFilter(filters.FilterSet):
         model = Snippet
         fields = ['language', 'created_after', 'created_before', 'search_title', 'search_code']
 
+
 class SnippetViewSet(viewsets.ModelViewSet):
     """
+    ViewSet for managing code snippets.
+    
     This ViewSet automatically provides `list`, `create`, `retrieve`,
-    `update` and `destroy` actions.
-
-    Additionally we also provide an extra `highlight` action.
+    `update` and `destroy` actions. Additionally, it provides a `highlight` action
+    for getting syntax-highlighted HTML representation of snippets.
+    
+    Features:
+    - Pagination support
+    - Filtering by language, date range, and search terms
+    - Owner-based permissions (only owners can edit/delete their snippets)
+    - Syntax highlighting via Pygments
     """
     serializer_class = SnippetSerializer
-    permission_classes = [permissions.IsAuthenticatedOrReadOnly,
-                          IsOwnerOrReadOnly]
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly, IsOwnerOrReadOnly]
     filterset_class = SnippetFilter
     filter_backends = (filters.DjangoFilterBackend,)
     pagination_class = SnippetPagination
 
+    @SNIPPET_HIGHLIGHT_SCHEMA
     @action(detail=True, renderer_classes=[renderers.StaticHTMLRenderer])
     def highlight(self, request, *args, **kwargs):
+        """Get syntax-highlighted HTML representation of a code snippet."""
         snippet = self.get_object()
         return Response(snippet.highlighted)
 
     def perform_create(self, serializer):
+        """Automatically associate the snippet with the authenticated user."""
         serializer.save(owner=self.request.user)
     
     def get_queryset(self):
+        """Return snippets based on user authentication status."""
         if self.request.user.is_authenticated:
             return Snippet.objects.filter(owner=self.request.user)
         # For unauthenticated users, return all snippets
         return Snippet.objects.all()
+
+    # Override ViewSet methods to add schema documentation
+    @SNIPPET_LIST_SCHEMA
+    def list(self, request, *args, **kwargs):
+        """List all snippets with filtering and pagination."""
+        return super().list(request, *args, **kwargs)
+
+    @SNIPPET_CREATE_SCHEMA
+    def create(self, request, *args, **kwargs):
+        """Create a new code snippet."""
+        return super().create(request, *args, **kwargs)
+
+    @SNIPPET_DETAIL_SCHEMA
+    def retrieve(self, request, *args, **kwargs):
+        """Retrieve a specific snippet by ID."""
+        return super().retrieve(request, *args, **kwargs)
+
+    @SNIPPET_UPDATE_SCHEMA
+    def update(self, request, *args, **kwargs):
+        """Update an existing snippet (full update)."""
+        return super().update(request, *args, **kwargs)
+
+    @SNIPPET_UPDATE_SCHEMA
+    def partial_update(self, request, *args, **kwargs):
+        """Update an existing snippet (partial update)."""
+        return super().partial_update(request, *args, **kwargs)
+
+    @SNIPPET_DELETE_SCHEMA
+    def destroy(self, request, *args, **kwargs):
+        """Delete a snippet."""
+        return super().destroy(request, *args, **kwargs)
 
 # class SnippetList(APIView):
 #     """
@@ -137,12 +191,25 @@ class SnippetViewSet(viewsets.ModelViewSet):
 
 class UserViewSet(viewsets.ReadOnlyModelViewSet):
     """
+    ViewSet for user management.
+    
     This viewset automatically provides `list` and `retrieve` actions.
+    Only authenticated users can access user information.
     """
     queryset = User.objects.all()
     serializer_class = UserSerializer
     permission_classes = [permissions.IsAuthenticated]
 
+    # Override ViewSet methods to add schema documentation
+    @USER_LIST_SCHEMA
+    def list(self, request, *args, **kwargs):
+        """List all users with pagination."""
+        return super().list(request, *args, **kwargs)
+
+    @USER_DETAIL_SCHEMA
+    def retrieve(self, request, *args, **kwargs):
+        """Retrieve a specific user by ID."""
+        return super().retrieve(request, *args, **kwargs)
 
 # class UserList(generics.ListAPIView):
 #     queryset = User.objects.all()

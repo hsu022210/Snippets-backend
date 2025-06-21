@@ -1,0 +1,2080 @@
+openapi: 3.0.3
+info:
+  title: Snippets API
+  version: 1.0.0
+  description: A simple API for managing code snippets.
+paths:
+  /auth/login/:
+    post:
+      operationId: auth_login_create
+      description: Authenticate user with email and password, returning JWT access
+        and refresh tokens.
+      summary: User Login
+      tags:
+      - Authentication
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                  format: email
+                  description: User's email address
+                password:
+                  type: string
+                  description: User's password
+                  minLength: 1
+              required:
+              - email
+              - password
+            examples:
+              ValidLogin:
+                value:
+                  email: john@example.com
+                  password: securepassword123
+                summary: Valid Login
+                description: Example of valid login credentials
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      - {}
+      responses:
+        '200':
+          description: Login successful
+        '400':
+          description: Missing credentials
+        '401':
+          description: Invalid credentials
+  /auth/login/refresh/:
+    post:
+      operationId: auth_login_refresh_create
+      description: Refresh an expired JWT access token using a valid refresh token.
+      summary: Refresh JWT Token
+      tags:
+      - Authentication
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                refresh:
+                  type: string
+                  description: Valid refresh token
+              required:
+              - refresh
+            examples:
+              TokenRefreshRequest:
+                value:
+                  refresh: eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...
+                summary: Token Refresh Request
+                description: Example of token refresh request
+      security:
+      - {}
+      responses:
+        '200':
+          description: Token refreshed successfully
+        '400':
+          description: Invalid refresh token
+        '401':
+          description: Token validation failed
+  /auth/logout/:
+    post:
+      operationId: auth_logout_create
+      description: 'Logout the authenticated user. Note: JWT tokens are stateless,
+        so the client should handle token removal.'
+      summary: User Logout
+      tags:
+      - Authentication
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          description: Successfully logged out
+        '400':
+          description: Logout failed
+        '401':
+          description: Authentication required
+  /auth/password-reset/:
+    post:
+      operationId: auth_password_reset_create
+      description: Send a password reset email to the user's email address with a
+        reset link.
+      summary: Request Password Reset
+      tags:
+      - Authentication
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                  format: email
+                  description: User's email address
+              required:
+              - email
+            examples:
+              PasswordResetRequest:
+                value:
+                  email: john@example.com
+                summary: Password Reset Request
+                description: Example of password reset request
+      responses:
+        '200':
+          description: Password reset email sent successfully
+        '400':
+          description: Invalid email or user not found
+  /auth/password-reset/confirm/:
+    post:
+      operationId: auth_password_reset_confirm_create
+      description: Confirm password reset using the token from the reset email and
+        set a new password.
+      summary: Confirm Password Reset
+      tags:
+      - Authentication
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                token:
+                  type: string
+                  description: Password reset token from email
+                password:
+                  type: string
+                  description: New password
+                  minLength: 8
+              required:
+              - token
+              - password
+            examples:
+              PasswordResetConfirmation:
+                value:
+                  token: abc123def456
+                  password: newsecurepassword123
+                summary: Password Reset Confirmation
+                description: Example of password reset confirmation
+      responses:
+        '200':
+          description: Password reset successful
+        '400':
+          description: Invalid token or password
+  /auth/register/:
+    post:
+      operationId: auth_register_create
+      description: Create a new user account with email verification and welcome email.
+      summary: Register New User
+      tags:
+      - Authentication
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterRequest'
+            examples:
+              ValidRegistration:
+                value:
+                  username: john_doe
+                  email: john@example.com
+                  password: securepassword123
+                  first_name: John
+                  last_name: Doe
+                summary: Valid Registration
+                description: Example of valid registration data
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/RegisterRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/RegisterRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      - {}
+      responses:
+        '201':
+          description: User successfully registered
+        '400':
+          description: Invalid registration data
+        '500':
+          description: Internal server error
+  /auth/user/:
+    get:
+      operationId: auth_user_retrieve
+      description: Retrieve and update the authenticated user's profile information.
+      summary: Get User Profile
+      tags:
+      - Authentication
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          description: User profile retrieved successfully
+        '401':
+          description: Authentication required
+    put:
+      operationId: auth_user_update
+      description: Retrieve and update the authenticated user's profile information.
+      summary: Get User Profile
+      tags:
+      - Authentication
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/UserRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/UserRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          description: User profile retrieved successfully
+        '401':
+          description: Authentication required
+    patch:
+      operationId: auth_user_partial_update
+      description: Retrieve and update the authenticated user's profile information.
+      summary: Get User Profile
+      tags:
+      - Authentication
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedUserRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedUserRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedUserRequest'
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          description: User profile retrieved successfully
+        '401':
+          description: Authentication required
+  /snippets/:
+    get:
+      operationId: snippets_list
+      description: |-
+        This ViewSet automatically provides `list`, `create`, `retrieve`,
+        `update` and `destroy` actions.
+
+        Additionally we also provide an extra `highlight` action.
+      parameters:
+      - in: query
+        name: created_after
+        schema:
+          type: string
+          format: date-time
+      - in: query
+        name: created_before
+        schema:
+          type: string
+          format: date-time
+      - in: query
+        name: language
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - in: query
+        name: search_code
+        schema:
+          type: string
+      - in: query
+        name: search_title
+        schema:
+          type: string
+      tags:
+      - snippets
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedSnippetList'
+          description: ''
+    post:
+      operationId: snippets_create
+      description: |-
+        This ViewSet automatically provides `list`, `create`, `retrieve`,
+        `update` and `destroy` actions.
+
+        Additionally we also provide an extra `highlight` action.
+      tags:
+      - snippets
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SnippetRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/SnippetRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/SnippetRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Snippet'
+          description: ''
+  /snippets/{id}/:
+    get:
+      operationId: snippets_retrieve
+      description: |-
+        This ViewSet automatically provides `list`, `create`, `retrieve`,
+        `update` and `destroy` actions.
+
+        Additionally we also provide an extra `highlight` action.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this snippet.
+        required: true
+      tags:
+      - snippets
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Snippet'
+          description: ''
+    put:
+      operationId: snippets_update
+      description: |-
+        This ViewSet automatically provides `list`, `create`, `retrieve`,
+        `update` and `destroy` actions.
+
+        Additionally we also provide an extra `highlight` action.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this snippet.
+        required: true
+      tags:
+      - snippets
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SnippetRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/SnippetRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/SnippetRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Snippet'
+          description: ''
+    patch:
+      operationId: snippets_partial_update
+      description: |-
+        This ViewSet automatically provides `list`, `create`, `retrieve`,
+        `update` and `destroy` actions.
+
+        Additionally we also provide an extra `highlight` action.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this snippet.
+        required: true
+      tags:
+      - snippets
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedSnippetRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedSnippetRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedSnippetRequest'
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Snippet'
+          description: ''
+    delete:
+      operationId: snippets_destroy
+      description: |-
+        This ViewSet automatically provides `list`, `create`, `retrieve`,
+        `update` and `destroy` actions.
+
+        Additionally we also provide an extra `highlight` action.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this snippet.
+        required: true
+      tags:
+      - snippets
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '204':
+          description: No response body
+  /snippets/{id}/highlight/:
+    get:
+      operationId: snippets_highlight_retrieve
+      description: |-
+        This ViewSet automatically provides `list`, `create`, `retrieve`,
+        `update` and `destroy` actions.
+
+        Additionally we also provide an extra `highlight` action.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this snippet.
+        required: true
+      tags:
+      - snippets
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            text/html:
+              schema:
+                $ref: '#/components/schemas/Snippet'
+          description: ''
+  /users/:
+    get:
+      operationId: users_list
+      description: This viewset automatically provides `list` and `retrieve` actions.
+      parameters:
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      tags:
+      - users
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedUserList'
+          description: ''
+  /users/{id}/:
+    get:
+      operationId: users_retrieve
+      description: This viewset automatically provides `list` and `retrieve` actions.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this user.
+        required: true
+      tags:
+      - users
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+          description: ''
+components:
+  schemas:
+    LanguageEnum:
+      enum:
+      - abap
+      - abnf
+      - actionscript
+      - actionscript3
+      - ada
+      - adl
+      - agda
+      - aheui
+      - alloy
+      - ambienttalk
+      - amdgpu
+      - ampl
+      - androidbp
+      - ansys
+      - antlr
+      - antlr-actionscript
+      - antlr-cpp
+      - antlr-csharp
+      - antlr-java
+      - antlr-objc
+      - antlr-perl
+      - antlr-python
+      - antlr-ruby
+      - apacheconf
+      - apl
+      - applescript
+      - arduino
+      - arrow
+      - arturo
+      - asc
+      - asn1
+      - aspectj
+      - aspx-cs
+      - aspx-vb
+      - asymptote
+      - augeas
+      - autohotkey
+      - autoit
+      - awk
+      - bare
+      - basemake
+      - bash
+      - batch
+      - bbcbasic
+      - bbcode
+      - bc
+      - bdd
+      - befunge
+      - berry
+      - bibtex
+      - blitzbasic
+      - blitzmax
+      - blueprint
+      - bnf
+      - boa
+      - boo
+      - boogie
+      - bqn
+      - brainfuck
+      - bst
+      - bugs
+      - c
+      - c-objdump
+      - ca65
+      - cadl
+      - camkes
+      - capdl
+      - capnp
+      - carbon
+      - cbmbas
+      - cddl
+      - ceylon
+      - cfc
+      - cfengine3
+      - cfm
+      - cfs
+      - chaiscript
+      - chapel
+      - charmci
+      - cheetah
+      - cirru
+      - clay
+      - clean
+      - clojure
+      - clojurescript
+      - cmake
+      - cobol
+      - cobolfree
+      - codeql
+      - coffeescript
+      - comal
+      - common-lisp
+      - componentpascal
+      - console
+      - coq
+      - cplint
+      - cpp
+      - cpp-objdump
+      - cpsa
+      - cr
+      - crmsh
+      - croc
+      - cryptol
+      - csharp
+      - csound
+      - csound-document
+      - csound-score
+      - css
+      - css+django
+      - css+genshitext
+      - css+lasso
+      - css+mako
+      - css+mozpreproc
+      - css+myghty
+      - css+php
+      - css+ruby
+      - css+smarty
+      - css+ul4
+      - cuda
+      - cypher
+      - cython
+      - d
+      - d-objdump
+      - dart
+      - dasm16
+      - dax
+      - debcontrol
+      - debian.sources
+      - debsources
+      - delphi
+      - desktop
+      - devicetree
+      - dg
+      - diff
+      - django
+      - docker
+      - doscon
+      - dpatch
+      - dtd
+      - duel
+      - dylan
+      - dylan-console
+      - dylan-lid
+      - earl-grey
+      - easytrieve
+      - ebnf
+      - ec
+      - ecl
+      - eiffel
+      - elixir
+      - elm
+      - elpi
+      - emacs-lisp
+      - email
+      - erb
+      - erl
+      - erlang
+      - evoque
+      - execline
+      - extempore
+      - ezhil
+      - factor
+      - fan
+      - fancy
+      - felix
+      - fennel
+      - fift
+      - fish
+      - flatline
+      - floscript
+      - forth
+      - fortran
+      - fortranfixed
+      - foxpro
+      - freefem
+      - fsharp
+      - fstar
+      - func
+      - futhark
+      - gap
+      - gap-console
+      - gas
+      - gcode
+      - gdscript
+      - genshi
+      - genshitext
+      - gherkin
+      - gleam
+      - glsl
+      - gnuplot
+      - go
+      - golo
+      - gooddata-cl
+      - googlesql
+      - gosu
+      - graphql
+      - graphviz
+      - groff
+      - groovy
+      - gsql
+      - gst
+      - haml
+      - handlebars
+      - hare
+      - haskell
+      - haxe
+      - haxeml
+      - hexdump
+      - hlsl
+      - hsail
+      - hspec
+      - html
+      - html+cheetah
+      - html+django
+      - html+evoque
+      - html+genshi
+      - html+handlebars
+      - html+lasso
+      - html+mako
+      - html+myghty
+      - html+ng2
+      - html+php
+      - html+smarty
+      - html+twig
+      - html+ul4
+      - html+velocity
+      - http
+      - hybris
+      - hylang
+      - i6t
+      - icon
+      - idl
+      - idris
+      - iex
+      - igor
+      - inform6
+      - inform7
+      - ini
+      - io
+      - ioke
+      - irc
+      - isabelle
+      - j
+      - jags
+      - janet
+      - jasmin
+      - java
+      - javascript
+      - javascript+cheetah
+      - javascript+django
+      - javascript+lasso
+      - javascript+mako
+      - javascript+mozpreproc
+      - javascript+myghty
+      - javascript+php
+      - javascript+ruby
+      - javascript+smarty
+      - jcl
+      - jlcon
+      - jmespath
+      - js+genshitext
+      - js+ul4
+      - jsgf
+      - jslt
+      - json
+      - json5
+      - jsonld
+      - jsonnet
+      - jsp
+      - jsx
+      - julia
+      - juttle
+      - k
+      - kal
+      - kconfig
+      - kmsg
+      - koka
+      - kotlin
+      - kql
+      - kuin
+      - lasso
+      - ldapconf
+      - ldif
+      - lean
+      - lean4
+      - less
+      - lighttpd
+      - lilypond
+      - limbo
+      - liquid
+      - literate-agda
+      - literate-cryptol
+      - literate-haskell
+      - literate-idris
+      - livescript
+      - llvm
+      - llvm-mir
+      - llvm-mir-body
+      - logos
+      - logtalk
+      - lsl
+      - lua
+      - luau
+      - macaulay2
+      - make
+      - mako
+      - maple
+      - maql
+      - markdown
+      - mask
+      - mason
+      - mathematica
+      - matlab
+      - matlabsession
+      - maxima
+      - mcfunction
+      - mcschema
+      - meson
+      - mime
+      - minid
+      - miniscript
+      - mips
+      - modelica
+      - modula2
+      - mojo
+      - monkey
+      - monte
+      - moocode
+      - moonscript
+      - mosel
+      - mozhashpreproc
+      - mozpercentpreproc
+      - mql
+      - mscgen
+      - mupad
+      - mxml
+      - myghty
+      - mysql
+      - nasm
+      - ncl
+      - nemerle
+      - nesc
+      - nestedtext
+      - newlisp
+      - newspeak
+      - ng2
+      - nginx
+      - nimrod
+      - nit
+      - nixos
+      - nodejsrepl
+      - notmuch
+      - nsis
+      - numba_ir
+      - numpy
+      - nusmv
+      - objdump
+      - objdump-nasm
+      - objective-c
+      - objective-c++
+      - objective-j
+      - ocaml
+      - octave
+      - odin
+      - omg-idl
+      - ooc
+      - opa
+      - openedge
+      - openscad
+      - org
+      - output
+      - pacmanconf
+      - pan
+      - parasail
+      - pawn
+      - pddl
+      - peg
+      - perl
+      - perl6
+      - phix
+      - php
+      - pig
+      - pike
+      - pkgconfig
+      - plpgsql
+      - pointless
+      - pony
+      - portugol
+      - postgres-explain
+      - postgresql
+      - postscript
+      - pot
+      - pov
+      - powershell
+      - praat
+      - procfile
+      - prolog
+      - promela
+      - promql
+      - properties
+      - protobuf
+      - prql
+      - psql
+      - psysh
+      - ptx
+      - pug
+      - puppet
+      - pwsh-session
+      - py+ul4
+      - py2tb
+      - pycon
+      - pypylog
+      - pytb
+      - python
+      - python2
+      - q
+      - qbasic
+      - qlik
+      - qml
+      - qvto
+      - racket
+      - ragel
+      - ragel-c
+      - ragel-cpp
+      - ragel-d
+      - ragel-em
+      - ragel-java
+      - ragel-objc
+      - ragel-ruby
+      - rbcon
+      - rconsole
+      - rd
+      - reasonml
+      - rebol
+      - red
+      - redcode
+      - registry
+      - rego
+      - resourcebundle
+      - restructuredtext
+      - rexx
+      - rhtml
+      - ride
+      - rita
+      - rng-compact
+      - roboconf-graph
+      - roboconf-instances
+      - robotframework
+      - rql
+      - rsl
+      - ruby
+      - rust
+      - sarl
+      - sas
+      - sass
+      - savi
+      - scala
+      - scaml
+      - scdoc
+      - scheme
+      - scilab
+      - scss
+      - sed
+      - sgf
+      - shen
+      - shexc
+      - sieve
+      - silver
+      - singularity
+      - slash
+      - slim
+      - slurm
+      - smali
+      - smalltalk
+      - smarty
+      - smithy
+      - sml
+      - snbt
+      - snobol
+      - snowball
+      - solidity
+      - sophia
+      - sp
+      - sparql
+      - spec
+      - spice
+      - splus
+      - sql
+      - sql+jinja
+      - sqlite3
+      - squidconf
+      - srcinfo
+      - ssp
+      - stan
+      - stata
+      - supercollider
+      - swift
+      - swig
+      - systemd
+      - systemverilog
+      - tablegen
+      - tact
+      - tads3
+      - tal
+      - tap
+      - tasm
+      - tcl
+      - tcsh
+      - tcshcon
+      - tea
+      - teal
+      - teratermmacro
+      - termcap
+      - terminfo
+      - terraform
+      - tex
+      - text
+      - thrift
+      - ti
+      - tid
+      - tlb
+      - tls
+      - tnt
+      - todotxt
+      - toml
+      - trac-wiki
+      - trafficscript
+      - treetop
+      - tsql
+      - tsx
+      - turtle
+      - twig
+      - typescript
+      - typoscript
+      - typoscriptcssdata
+      - typoscripthtmldata
+      - typst
+      - ucode
+      - ul4
+      - unicon
+      - unixconfig
+      - urbiscript
+      - urlencoded
+      - usd
+      - vala
+      - vb.net
+      - vbscript
+      - vcl
+      - vclsnippets
+      - vctreestatus
+      - velocity
+      - verifpal
+      - verilog
+      - vgl
+      - vhdl
+      - vim
+      - visualprolog
+      - visualprologgrammar
+      - vue
+      - vyper
+      - wast
+      - wdiff
+      - webidl
+      - wgsl
+      - whiley
+      - wikitext
+      - wowtoc
+      - wren
+      - x10
+      - xml
+      - xml+cheetah
+      - xml+django
+      - xml+evoque
+      - xml+lasso
+      - xml+mako
+      - xml+myghty
+      - xml+php
+      - xml+ruby
+      - xml+smarty
+      - xml+ul4
+      - xml+velocity
+      - xorg.conf
+      - xpp
+      - xquery
+      - xslt
+      - xtend
+      - xul+mozpreproc
+      - yaml
+      - yaml+jinja
+      - yang
+      - yara
+      - zeek
+      - zephir
+      - zig
+      - zone
+      type: string
+      description: |-
+        * `abap` - ABAP
+        * `abnf` - ABNF
+        * `actionscript` - ActionScript
+        * `actionscript3` - ActionScript 3
+        * `ada` - Ada
+        * `adl` - ADL
+        * `agda` - Agda
+        * `aheui` - Aheui
+        * `alloy` - Alloy
+        * `ambienttalk` - AmbientTalk
+        * `amdgpu` - AMDGPU
+        * `ampl` - Ampl
+        * `androidbp` - Soong
+        * `ansys` - ANSYS parametric design language
+        * `antlr` - ANTLR
+        * `antlr-actionscript` - ANTLR With ActionScript Target
+        * `antlr-cpp` - ANTLR With CPP Target
+        * `antlr-csharp` - ANTLR With C# Target
+        * `antlr-java` - ANTLR With Java Target
+        * `antlr-objc` - ANTLR With ObjectiveC Target
+        * `antlr-perl` - ANTLR With Perl Target
+        * `antlr-python` - ANTLR With Python Target
+        * `antlr-ruby` - ANTLR With Ruby Target
+        * `apacheconf` - ApacheConf
+        * `apl` - APL
+        * `applescript` - AppleScript
+        * `arduino` - Arduino
+        * `arrow` - Arrow
+        * `arturo` - Arturo
+        * `asc` - ASCII armored
+        * `asn1` - ASN.1
+        * `aspectj` - AspectJ
+        * `aspx-cs` - aspx-cs
+        * `aspx-vb` - aspx-vb
+        * `asymptote` - Asymptote
+        * `augeas` - Augeas
+        * `autohotkey` - autohotkey
+        * `autoit` - AutoIt
+        * `awk` - Awk
+        * `bare` - BARE
+        * `basemake` - Base Makefile
+        * `bash` - Bash
+        * `batch` - Batchfile
+        * `bbcbasic` - BBC Basic
+        * `bbcode` - BBCode
+        * `bc` - BC
+        * `bdd` - Bdd
+        * `befunge` - Befunge
+        * `berry` - Berry
+        * `bibtex` - BibTeX
+        * `blitzbasic` - BlitzBasic
+        * `blitzmax` - BlitzMax
+        * `blueprint` - Blueprint
+        * `bnf` - BNF
+        * `boa` - Boa
+        * `boo` - Boo
+        * `boogie` - Boogie
+        * `bqn` - BQN
+        * `brainfuck` - Brainfuck
+        * `bst` - BST
+        * `bugs` - BUGS
+        * `c` - C
+        * `c-objdump` - c-objdump
+        * `ca65` - ca65 assembler
+        * `cadl` - cADL
+        * `camkes` - CAmkES
+        * `capdl` - CapDL
+        * `capnp` - Cap'n Proto
+        * `carbon` - Carbon
+        * `cbmbas` - CBM BASIC V2
+        * `cddl` - CDDL
+        * `ceylon` - Ceylon
+        * `cfc` - Coldfusion CFC
+        * `cfengine3` - CFEngine3
+        * `cfm` - Coldfusion HTML
+        * `cfs` - cfstatement
+        * `chaiscript` - ChaiScript
+        * `chapel` - Chapel
+        * `charmci` - Charmci
+        * `cheetah` - Cheetah
+        * `cirru` - Cirru
+        * `clay` - Clay
+        * `clean` - Clean
+        * `clojure` - Clojure
+        * `clojurescript` - ClojureScript
+        * `cmake` - CMake
+        * `cobol` - COBOL
+        * `cobolfree` - COBOLFree
+        * `codeql` - CodeQL
+        * `coffeescript` - CoffeeScript
+        * `comal` - COMAL-80
+        * `common-lisp` - Common Lisp
+        * `componentpascal` - Component Pascal
+        * `console` - Bash Session
+        * `coq` - Coq
+        * `cplint` - cplint
+        * `cpp` - C++
+        * `cpp-objdump` - cpp-objdump
+        * `cpsa` - CPSA
+        * `cr` - Crystal
+        * `crmsh` - Crmsh
+        * `croc` - Croc
+        * `cryptol` - Cryptol
+        * `csharp` - C#
+        * `csound` - Csound Orchestra
+        * `csound-document` - Csound Document
+        * `csound-score` - Csound Score
+        * `css` - CSS
+        * `css+django` - CSS+Django/Jinja
+        * `css+genshitext` - CSS+Genshi Text
+        * `css+lasso` - CSS+Lasso
+        * `css+mako` - CSS+Mako
+        * `css+mozpreproc` - CSS+mozpreproc
+        * `css+myghty` - CSS+Myghty
+        * `css+php` - CSS+PHP
+        * `css+ruby` - CSS+Ruby
+        * `css+smarty` - CSS+Smarty
+        * `css+ul4` - CSS+UL4
+        * `cuda` - CUDA
+        * `cypher` - Cypher
+        * `cython` - Cython
+        * `d` - D
+        * `d-objdump` - d-objdump
+        * `dart` - Dart
+        * `dasm16` - DASM16
+        * `dax` - Dax
+        * `debcontrol` - Debian Control file
+        * `debian.sources` - Debian Sources file
+        * `debsources` - Debian Sourcelist
+        * `delphi` - Delphi
+        * `desktop` - Desktop file
+        * `devicetree` - Devicetree
+        * `dg` - dg
+        * `diff` - Diff
+        * `django` - Django/Jinja
+        * `docker` - Docker
+        * `doscon` - MSDOS Session
+        * `dpatch` - Darcs Patch
+        * `dtd` - DTD
+        * `duel` - Duel
+        * `dylan` - Dylan
+        * `dylan-console` - Dylan session
+        * `dylan-lid` - DylanLID
+        * `earl-grey` - Earl Grey
+        * `easytrieve` - Easytrieve
+        * `ebnf` - EBNF
+        * `ec` - eC
+        * `ecl` - ECL
+        * `eiffel` - Eiffel
+        * `elixir` - Elixir
+        * `elm` - Elm
+        * `elpi` - Elpi
+        * `emacs-lisp` - EmacsLisp
+        * `email` - E-mail
+        * `erb` - ERB
+        * `erl` - Erlang erl session
+        * `erlang` - Erlang
+        * `evoque` - Evoque
+        * `execline` - execline
+        * `extempore` - xtlang
+        * `ezhil` - Ezhil
+        * `factor` - Factor
+        * `fan` - Fantom
+        * `fancy` - Fancy
+        * `felix` - Felix
+        * `fennel` - Fennel
+        * `fift` - Fift
+        * `fish` - Fish
+        * `flatline` - Flatline
+        * `floscript` - FloScript
+        * `forth` - Forth
+        * `fortran` - Fortran
+        * `fortranfixed` - FortranFixed
+        * `foxpro` - FoxPro
+        * `freefem` - Freefem
+        * `fsharp` - F#
+        * `fstar` - FStar
+        * `func` - FunC
+        * `futhark` - Futhark
+        * `gap` - GAP
+        * `gap-console` - GAP session
+        * `gas` - GAS
+        * `gcode` - g-code
+        * `gdscript` - GDScript
+        * `genshi` - Genshi
+        * `genshitext` - Genshi Text
+        * `gherkin` - Gherkin
+        * `gleam` - Gleam
+        * `glsl` - GLSL
+        * `gnuplot` - Gnuplot
+        * `go` - Go
+        * `golo` - Golo
+        * `gooddata-cl` - GoodData-CL
+        * `googlesql` - GoogleSQL
+        * `gosu` - Gosu
+        * `graphql` - GraphQL
+        * `graphviz` - Graphviz
+        * `groff` - Groff
+        * `groovy` - Groovy
+        * `gsql` - GSQL
+        * `gst` - Gosu Template
+        * `haml` - Haml
+        * `handlebars` - Handlebars
+        * `hare` - Hare
+        * `haskell` - Haskell
+        * `haxe` - Haxe
+        * `haxeml` - Hxml
+        * `hexdump` - Hexdump
+        * `hlsl` - HLSL
+        * `hsail` - HSAIL
+        * `hspec` - Hspec
+        * `html` - HTML
+        * `html+cheetah` - HTML+Cheetah
+        * `html+django` - HTML+Django/Jinja
+        * `html+evoque` - HTML+Evoque
+        * `html+genshi` - HTML+Genshi
+        * `html+handlebars` - HTML+Handlebars
+        * `html+lasso` - HTML+Lasso
+        * `html+mako` - HTML+Mako
+        * `html+myghty` - HTML+Myghty
+        * `html+ng2` - HTML + Angular2
+        * `html+php` - HTML+PHP
+        * `html+smarty` - HTML+Smarty
+        * `html+twig` - HTML+Twig
+        * `html+ul4` - HTML+UL4
+        * `html+velocity` - HTML+Velocity
+        * `http` - HTTP
+        * `hybris` - Hybris
+        * `hylang` - Hy
+        * `i6t` - Inform 6 template
+        * `icon` - Icon
+        * `idl` - IDL
+        * `idris` - Idris
+        * `iex` - Elixir iex session
+        * `igor` - Igor
+        * `inform6` - Inform 6
+        * `inform7` - Inform 7
+        * `ini` - INI
+        * `io` - Io
+        * `ioke` - Ioke
+        * `irc` - IRC logs
+        * `isabelle` - Isabelle
+        * `j` - J
+        * `jags` - JAGS
+        * `janet` - Janet
+        * `jasmin` - Jasmin
+        * `java` - Java
+        * `javascript` - JavaScript
+        * `javascript+cheetah` - JavaScript+Cheetah
+        * `javascript+django` - JavaScript+Django/Jinja
+        * `javascript+lasso` - JavaScript+Lasso
+        * `javascript+mako` - JavaScript+Mako
+        * `javascript+mozpreproc` - Javascript+mozpreproc
+        * `javascript+myghty` - JavaScript+Myghty
+        * `javascript+php` - JavaScript+PHP
+        * `javascript+ruby` - JavaScript+Ruby
+        * `javascript+smarty` - JavaScript+Smarty
+        * `jcl` - JCL
+        * `jlcon` - Julia console
+        * `jmespath` - JMESPath
+        * `js+genshitext` - JavaScript+Genshi Text
+        * `js+ul4` - Javascript+UL4
+        * `jsgf` - JSGF
+        * `jslt` - JSLT
+        * `json` - JSON
+        * `json5` - JSON5
+        * `jsonld` - JSON-LD
+        * `jsonnet` - Jsonnet
+        * `jsp` - Java Server Page
+        * `jsx` - JSX
+        * `julia` - Julia
+        * `juttle` - Juttle
+        * `k` - K
+        * `kal` - Kal
+        * `kconfig` - Kconfig
+        * `kmsg` - Kernel log
+        * `koka` - Koka
+        * `kotlin` - Kotlin
+        * `kql` - Kusto
+        * `kuin` - Kuin
+        * `lasso` - Lasso
+        * `ldapconf` - LDAP configuration file
+        * `ldif` - LDIF
+        * `lean` - Lean
+        * `lean4` - Lean4
+        * `less` - LessCss
+        * `lighttpd` - Lighttpd configuration file
+        * `lilypond` - LilyPond
+        * `limbo` - Limbo
+        * `liquid` - liquid
+        * `literate-agda` - Literate Agda
+        * `literate-cryptol` - Literate Cryptol
+        * `literate-haskell` - Literate Haskell
+        * `literate-idris` - Literate Idris
+        * `livescript` - LiveScript
+        * `llvm` - LLVM
+        * `llvm-mir` - LLVM-MIR
+        * `llvm-mir-body` - LLVM-MIR Body
+        * `logos` - Logos
+        * `logtalk` - Logtalk
+        * `lsl` - LSL
+        * `lua` - Lua
+        * `luau` - Luau
+        * `macaulay2` - Macaulay2
+        * `make` - Makefile
+        * `mako` - Mako
+        * `maple` - Maple
+        * `maql` - MAQL
+        * `markdown` - Markdown
+        * `mask` - Mask
+        * `mason` - Mason
+        * `mathematica` - Mathematica
+        * `matlab` - Matlab
+        * `matlabsession` - Matlab session
+        * `maxima` - Maxima
+        * `mcfunction` - MCFunction
+        * `mcschema` - MCSchema
+        * `meson` - Meson
+        * `mime` - MIME
+        * `minid` - MiniD
+        * `miniscript` - MiniScript
+        * `mips` - MIPS
+        * `modelica` - Modelica
+        * `modula2` - Modula-2
+        * `mojo` - Mojo
+        * `monkey` - Monkey
+        * `monte` - Monte
+        * `moocode` - MOOCode
+        * `moonscript` - MoonScript
+        * `mosel` - Mosel
+        * `mozhashpreproc` - mozhashpreproc
+        * `mozpercentpreproc` - mozpercentpreproc
+        * `mql` - MQL
+        * `mscgen` - Mscgen
+        * `mupad` - MuPAD
+        * `mxml` - MXML
+        * `myghty` - Myghty
+        * `mysql` - MySQL
+        * `nasm` - NASM
+        * `ncl` - NCL
+        * `nemerle` - Nemerle
+        * `nesc` - nesC
+        * `nestedtext` - NestedText
+        * `newlisp` - NewLisp
+        * `newspeak` - Newspeak
+        * `ng2` - Angular2
+        * `nginx` - Nginx configuration file
+        * `nimrod` - Nimrod
+        * `nit` - Nit
+        * `nixos` - Nix
+        * `nodejsrepl` - Node.js REPL console session
+        * `notmuch` - Notmuch
+        * `nsis` - NSIS
+        * `numba_ir` - Numba_IR
+        * `numpy` - NumPy
+        * `nusmv` - NuSMV
+        * `objdump` - objdump
+        * `objdump-nasm` - objdump-nasm
+        * `objective-c` - Objective-C
+        * `objective-c++` - Objective-C++
+        * `objective-j` - Objective-J
+        * `ocaml` - OCaml
+        * `octave` - Octave
+        * `odin` - ODIN
+        * `omg-idl` - OMG Interface Definition Language
+        * `ooc` - Ooc
+        * `opa` - Opa
+        * `openedge` - OpenEdge ABL
+        * `openscad` - OpenSCAD
+        * `org` - Org Mode
+        * `output` - Text output
+        * `pacmanconf` - PacmanConf
+        * `pan` - Pan
+        * `parasail` - ParaSail
+        * `pawn` - Pawn
+        * `pddl` - PDDL
+        * `peg` - PEG
+        * `perl` - Perl
+        * `perl6` - Perl6
+        * `phix` - Phix
+        * `php` - PHP
+        * `pig` - Pig
+        * `pike` - Pike
+        * `pkgconfig` - PkgConfig
+        * `plpgsql` - PL/pgSQL
+        * `pointless` - Pointless
+        * `pony` - Pony
+        * `portugol` - Portugol
+        * `postgres-explain` - PostgreSQL EXPLAIN dialect
+        * `postgresql` - PostgreSQL SQL dialect
+        * `postscript` - PostScript
+        * `pot` - Gettext Catalog
+        * `pov` - POVRay
+        * `powershell` - PowerShell
+        * `praat` - Praat
+        * `procfile` - Procfile
+        * `prolog` - Prolog
+        * `promela` - Promela
+        * `promql` - PromQL
+        * `properties` - Properties
+        * `protobuf` - Protocol Buffer
+        * `prql` - PRQL
+        * `psql` - PostgreSQL console (psql)
+        * `psysh` - PsySH console session for PHP
+        * `ptx` - PTX
+        * `pug` - Pug
+        * `puppet` - Puppet
+        * `pwsh-session` - PowerShell Session
+        * `py+ul4` - Python+UL4
+        * `py2tb` - Python 2.x Traceback
+        * `pycon` - Python console session
+        * `pypylog` - PyPy Log
+        * `pytb` - Python Traceback
+        * `python` - Python
+        * `python2` - Python 2.x
+        * `q` - Q
+        * `qbasic` - QBasic
+        * `qlik` - Qlik
+        * `qml` - QML
+        * `qvto` - QVTO
+        * `racket` - Racket
+        * `ragel` - Ragel
+        * `ragel-c` - Ragel in C Host
+        * `ragel-cpp` - Ragel in CPP Host
+        * `ragel-d` - Ragel in D Host
+        * `ragel-em` - Embedded Ragel
+        * `ragel-java` - Ragel in Java Host
+        * `ragel-objc` - Ragel in Objective C Host
+        * `ragel-ruby` - Ragel in Ruby Host
+        * `rbcon` - Ruby irb session
+        * `rconsole` - RConsole
+        * `rd` - Rd
+        * `reasonml` - ReasonML
+        * `rebol` - REBOL
+        * `red` - Red
+        * `redcode` - Redcode
+        * `registry` - reg
+        * `rego` - Rego
+        * `resourcebundle` - ResourceBundle
+        * `restructuredtext` - reStructuredText
+        * `rexx` - Rexx
+        * `rhtml` - RHTML
+        * `ride` - Ride
+        * `rita` - Rita
+        * `rng-compact` - Relax-NG Compact
+        * `roboconf-graph` - Roboconf Graph
+        * `roboconf-instances` - Roboconf Instances
+        * `robotframework` - RobotFramework
+        * `rql` - RQL
+        * `rsl` - RSL
+        * `ruby` - Ruby
+        * `rust` - Rust
+        * `sarl` - SARL
+        * `sas` - SAS
+        * `sass` - Sass
+        * `savi` - Savi
+        * `scala` - Scala
+        * `scaml` - Scaml
+        * `scdoc` - scdoc
+        * `scheme` - Scheme
+        * `scilab` - Scilab
+        * `scss` - SCSS
+        * `sed` - Sed
+        * `sgf` - SmartGameFormat
+        * `shen` - Shen
+        * `shexc` - ShExC
+        * `sieve` - Sieve
+        * `silver` - Silver
+        * `singularity` - Singularity
+        * `slash` - Slash
+        * `slim` - Slim
+        * `slurm` - Slurm
+        * `smali` - Smali
+        * `smalltalk` - Smalltalk
+        * `smarty` - Smarty
+        * `smithy` - Smithy
+        * `sml` - Standard ML
+        * `snbt` - SNBT
+        * `snobol` - Snobol
+        * `snowball` - Snowball
+        * `solidity` - Solidity
+        * `sophia` - Sophia
+        * `sp` - SourcePawn
+        * `sparql` - SPARQL
+        * `spec` - RPMSpec
+        * `spice` - Spice
+        * `splus` - S
+        * `sql` - SQL
+        * `sql+jinja` - SQL+Jinja
+        * `sqlite3` - sqlite3con
+        * `squidconf` - SquidConf
+        * `srcinfo` - Srcinfo
+        * `ssp` - Scalate Server Page
+        * `stan` - Stan
+        * `stata` - Stata
+        * `supercollider` - SuperCollider
+        * `swift` - Swift
+        * `swig` - SWIG
+        * `systemd` - Systemd
+        * `systemverilog` - systemverilog
+        * `tablegen` - TableGen
+        * `tact` - Tact
+        * `tads3` - TADS 3
+        * `tal` - Tal
+        * `tap` - TAP
+        * `tasm` - TASM
+        * `tcl` - Tcl
+        * `tcsh` - Tcsh
+        * `tcshcon` - Tcsh Session
+        * `tea` - Tea
+        * `teal` - teal
+        * `teratermmacro` - Tera Term macro
+        * `termcap` - Termcap
+        * `terminfo` - Terminfo
+        * `terraform` - Terraform
+        * `tex` - TeX
+        * `text` - Text only
+        * `thrift` - Thrift
+        * `ti` - ThingsDB
+        * `tid` - tiddler
+        * `tlb` - Tl-b
+        * `tls` - TLS Presentation Language
+        * `tnt` - Typographic Number Theory
+        * `todotxt` - Todotxt
+        * `toml` - TOML
+        * `trac-wiki` - MoinMoin/Trac Wiki markup
+        * `trafficscript` - TrafficScript
+        * `treetop` - Treetop
+        * `tsql` - Transact-SQL
+        * `tsx` - TSX
+        * `turtle` - Turtle
+        * `twig` - Twig
+        * `typescript` - TypeScript
+        * `typoscript` - TypoScript
+        * `typoscriptcssdata` - TypoScriptCssData
+        * `typoscripthtmldata` - TypoScriptHtmlData
+        * `typst` - Typst
+        * `ucode` - ucode
+        * `ul4` - UL4
+        * `unicon` - Unicon
+        * `unixconfig` - Unix/Linux config files
+        * `urbiscript` - UrbiScript
+        * `urlencoded` - urlencoded
+        * `usd` - USD
+        * `vala` - Vala
+        * `vb.net` - VB.net
+        * `vbscript` - VBScript
+        * `vcl` - VCL
+        * `vclsnippets` - VCLSnippets
+        * `vctreestatus` - VCTreeStatus
+        * `velocity` - Velocity
+        * `verifpal` - Verifpal
+        * `verilog` - verilog
+        * `vgl` - VGL
+        * `vhdl` - vhdl
+        * `vim` - VimL
+        * `visualprolog` - Visual Prolog
+        * `visualprologgrammar` - Visual Prolog Grammar
+        * `vue` - Vue
+        * `vyper` - Vyper
+        * `wast` - WebAssembly
+        * `wdiff` - WDiff
+        * `webidl` - Web IDL
+        * `wgsl` - WebGPU Shading Language
+        * `whiley` - Whiley
+        * `wikitext` - Wikitext
+        * `wowtoc` - World of Warcraft TOC
+        * `wren` - Wren
+        * `x10` - X10
+        * `xml` - XML
+        * `xml+cheetah` - XML+Cheetah
+        * `xml+django` - XML+Django/Jinja
+        * `xml+evoque` - XML+Evoque
+        * `xml+lasso` - XML+Lasso
+        * `xml+mako` - XML+Mako
+        * `xml+myghty` - XML+Myghty
+        * `xml+php` - XML+PHP
+        * `xml+ruby` - XML+Ruby
+        * `xml+smarty` - XML+Smarty
+        * `xml+ul4` - XML+UL4
+        * `xml+velocity` - XML+Velocity
+        * `xorg.conf` - Xorg
+        * `xpp` - X++
+        * `xquery` - XQuery
+        * `xslt` - XSLT
+        * `xtend` - Xtend
+        * `xul+mozpreproc` - XUL+mozpreproc
+        * `yaml` - YAML
+        * `yaml+jinja` - YAML+Jinja
+        * `yang` - YANG
+        * `yara` - YARA
+        * `zeek` - Zeek
+        * `zephir` - Zephir
+        * `zig` - Zig
+        * `zone` - Zone
+    PaginatedSnippetList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Snippet'
+    PaginatedUserList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/User'
+    PatchedSnippetRequest:
+      type: object
+      properties:
+        title:
+          type: string
+          maxLength: 100
+        code:
+          type: string
+          minLength: 1
+        linenos:
+          type: boolean
+        language:
+          $ref: '#/components/schemas/LanguageEnum'
+        style:
+          $ref: '#/components/schemas/StyleEnum'
+    PatchedUserRequest:
+      type: object
+      properties:
+        username:
+          type: string
+          minLength: 1
+          maxLength: 150
+        email:
+          type: string
+          format: email
+          minLength: 1
+          maxLength: 254
+        first_name:
+          type: string
+          maxLength: 150
+        last_name:
+          type: string
+          maxLength: 150
+    RegisterRequest:
+      type: object
+      properties:
+        username:
+          type: string
+          minLength: 1
+        password:
+          type: string
+          writeOnly: true
+          minLength: 1
+        password2:
+          type: string
+          writeOnly: true
+          minLength: 1
+        email:
+          type: string
+          format: email
+          minLength: 1
+        first_name:
+          type: string
+          maxLength: 150
+        last_name:
+          type: string
+          maxLength: 150
+      required:
+      - email
+      - password
+      - password2
+      - username
+    Snippet:
+      type: object
+      properties:
+        url:
+          type: string
+          format: uri
+          readOnly: true
+        id:
+          type: integer
+          readOnly: true
+        highlight:
+          type: string
+          format: uri
+          readOnly: true
+        owner:
+          type: string
+          readOnly: true
+        title:
+          type: string
+          maxLength: 100
+        code:
+          type: string
+        linenos:
+          type: boolean
+        language:
+          $ref: '#/components/schemas/LanguageEnum'
+        style:
+          $ref: '#/components/schemas/StyleEnum'
+        created:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - code
+      - created
+      - highlight
+      - id
+      - owner
+      - url
+    SnippetRequest:
+      type: object
+      properties:
+        title:
+          type: string
+          maxLength: 100
+        code:
+          type: string
+          minLength: 1
+        linenos:
+          type: boolean
+        language:
+          $ref: '#/components/schemas/LanguageEnum'
+        style:
+          $ref: '#/components/schemas/StyleEnum'
+      required:
+      - code
+    StyleEnum:
+      enum:
+      - abap
+      - algol
+      - algol_nu
+      - arduino
+      - autumn
+      - borland
+      - bw
+      - coffee
+      - colorful
+      - default
+      - dracula
+      - emacs
+      - friendly
+      - friendly_grayscale
+      - fruity
+      - github-dark
+      - gruvbox-dark
+      - gruvbox-light
+      - igor
+      - inkpot
+      - lightbulb
+      - lilypond
+      - lovelace
+      - manni
+      - material
+      - monokai
+      - murphy
+      - native
+      - nord
+      - nord-darker
+      - one-dark
+      - paraiso-dark
+      - paraiso-light
+      - pastie
+      - perldoc
+      - rainbow_dash
+      - rrt
+      - sas
+      - solarized-dark
+      - solarized-light
+      - staroffice
+      - stata-dark
+      - stata-light
+      - tango
+      - trac
+      - vim
+      - vs
+      - xcode
+      - zenburn
+      type: string
+      description: |-
+        * `abap` - abap
+        * `algol` - algol
+        * `algol_nu` - algol_nu
+        * `arduino` - arduino
+        * `autumn` - autumn
+        * `borland` - borland
+        * `bw` - bw
+        * `coffee` - coffee
+        * `colorful` - colorful
+        * `default` - default
+        * `dracula` - dracula
+        * `emacs` - emacs
+        * `friendly` - friendly
+        * `friendly_grayscale` - friendly_grayscale
+        * `fruity` - fruity
+        * `github-dark` - github-dark
+        * `gruvbox-dark` - gruvbox-dark
+        * `gruvbox-light` - gruvbox-light
+        * `igor` - igor
+        * `inkpot` - inkpot
+        * `lightbulb` - lightbulb
+        * `lilypond` - lilypond
+        * `lovelace` - lovelace
+        * `manni` - manni
+        * `material` - material
+        * `monokai` - monokai
+        * `murphy` - murphy
+        * `native` - native
+        * `nord` - nord
+        * `nord-darker` - nord-darker
+        * `one-dark` - one-dark
+        * `paraiso-dark` - paraiso-dark
+        * `paraiso-light` - paraiso-light
+        * `pastie` - pastie
+        * `perldoc` - perldoc
+        * `rainbow_dash` - rainbow_dash
+        * `rrt` - rrt
+        * `sas` - sas
+        * `solarized-dark` - solarized-dark
+        * `solarized-light` - solarized-light
+        * `staroffice` - staroffice
+        * `stata-dark` - stata-dark
+        * `stata-light` - stata-light
+        * `tango` - tango
+        * `trac` - trac
+        * `vim` - vim
+        * `vs` - vs
+        * `xcode` - xcode
+        * `zenburn` - zenburn
+    User:
+      type: object
+      properties:
+        url:
+          type: string
+          format: uri
+          readOnly: true
+        id:
+          type: integer
+          readOnly: true
+        username:
+          type: string
+          maxLength: 150
+        snippets:
+          type: array
+          items:
+            type: string
+            format: uri
+          readOnly: true
+      required:
+      - id
+      - snippets
+      - url
+      - username
+    UserRequest:
+      type: object
+      properties:
+        username:
+          type: string
+          minLength: 1
+          maxLength: 150
+        email:
+          type: string
+          format: email
+          minLength: 1
+          maxLength: 254
+        first_name:
+          type: string
+          maxLength: 150
+        last_name:
+          type: string
+          maxLength: 150
+      required:
+      - email
+      - username
+  securitySchemes:
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: sessionid
+    jwtAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+servers:
+- url: http://localhost:8000
+  description: Local Development server
+- url: https://api.example.com
+  description: Production server
