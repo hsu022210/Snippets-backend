@@ -62,13 +62,19 @@ Create a `.env` file in the root directory:
 ```env
 SECRET_KEY=your-secret-key-here
 DEBUG=True
+# For local development, SQLite is used by default (see config/settings.py)
+# For production, set DATABASE_URL (see below)
 DATABASE_URL=sqlite:///db.sqlite3
 EMAIL_HOST=smtp.gmail.com
 EMAIL_PORT=587
 EMAIL_USE_TLS=True
-EMAIL_HOST_USER=your-email@gmail.com
-EMAIL_HOST_PASSWORD=your-app-password
+EMAIL_HOST_USER=your-email@gmail.com  # Loaded via os.getenv in settings.py
+EMAIL_HOST_PASSWORD=your-app-password  # Loaded via os.getenv in settings.py
 ```
+
+> **Note:**
+> - `DATABASE_URL` is only used in production deployments (see `config/deployment_settings.py`). For local development, the project uses SQLite by default.
+> - `EMAIL_HOST_USER` and `EMAIL_HOST_PASSWORD` are loaded from environment variables using `os.getenv` in `config/settings.py`.
 
 ### 5. Database Setup
 
@@ -186,19 +192,10 @@ snippets-backend/
 
 ### Database Configuration
 
-For production, update the database settings in `config/settings.py`:
+For production, update the database settings by setting the `DATABASE_URL` environment variable. The production settings are managed in `config/deployment_settings.py` and are automatically used when deploying (see `manage.py` and `wsgi.py`). Example:
 
-```python
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'your_db_name',
-        'USER': 'your_db_user',
-        'PASSWORD': 'your_db_password',
-        'HOST': 'localhost',
-        'PORT': '5432',
-    }
-}
+```bash
+export DATABASE_URL="postgresql://user:password@localhost/dbname"
 ```
 
 ### Email Configuration
@@ -257,6 +254,9 @@ export DEBUG=False
 export DATABASE_URL="postgresql://user:password@localhost/dbname"
 export ALLOWED_HOSTS="your-domain.com,www.your-domain.com"
 ```
+
+> **Note:**
+> - `ALLOWED_HOSTS` should be a comma-separated list of allowed domains. In your deployment settings, ensure this is parsed into a Python list if needed.
 
 ## 🧪 Testing
 
@@ -326,3 +326,7 @@ For support and questions:
 - Added syntax highlighting
 - Added API documentation
 - Added password reset functionality
+
+## 🧑‍💻 Custom User Model
+
+This project uses a custom user model where **email** is the primary login field (`USERNAME_FIELD = 'email'`). The registration endpoint requires both `email` and `username` fields. Make sure to use your email address to log in.
