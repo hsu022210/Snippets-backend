@@ -183,6 +183,7 @@ paths:
                   username: john_doe
                   email: john@example.com
                   password: securepassword123
+                  password2: securepassword123
                   first_name: John
                   last_name: Doe
                 summary: Valid Registration
@@ -209,7 +210,7 @@ paths:
     get:
       operationId: auth_user_retrieve
       description: Retrieve and update the authenticated user's profile information.
-      summary: Get User Profile
+      summary: User Profile
       tags:
       - Authentication
       security:
@@ -223,7 +224,7 @@ paths:
     put:
       operationId: auth_user_update
       description: Retrieve and update the authenticated user's profile information.
-      summary: Get User Profile
+      summary: User Profile
       tags:
       - Authentication
       requestBody:
@@ -249,7 +250,7 @@ paths:
     patch:
       operationId: auth_user_partial_update
       description: Retrieve and update the authenticated user's profile information.
-      summary: Get User Profile
+      summary: User Profile
       tags:
       - Authentication
       requestBody:
@@ -274,32 +275,52 @@ paths:
   /snippets/:
     get:
       operationId: snippets_list
-      description: |-
-        This ViewSet automatically provides `list`, `create`, `retrieve`,
-        `update` and `destroy` actions.
-
-        Additionally we also provide an extra `highlight` action.
+      description: Retrieve a paginated list of code snippets. Authenticated users
+        see their own snippets, while unauthenticated users see all public snippets.
+      summary: List Snippets
       parameters:
       - in: query
         name: created_after
         schema:
           type: string
-          format: date-time
+        description: 'Filter snippets created after this date (ISO format: YYYY-MM-DDTHH:MM:SSZ)'
+        examples:
+          AfterDate:
+            value: '2024-01-01T00:00:00Z'
+            summary: After Date
       - in: query
         name: created_before
         schema:
           type: string
-          format: date-time
+        description: 'Filter snippets created before this date (ISO format: YYYY-MM-DDTHH:MM:SSZ)'
+        examples:
+          BeforeDate:
+            value: '2024-12-31T23:59:59Z'
+            summary: Before Date
       - in: query
         name: language
         schema:
           type: string
-      - name: page
-        required: false
-        in: query
-        description: A page number within the paginated result set.
+        description: Filter snippets by programming language (case-insensitive)
+        examples:
+          Python:
+            value: python
+          JavaScript:
+            value: javascript
+          Java:
+            value: java
+      - in: query
+        name: page
         schema:
           type: integer
+        description: Page number for pagination
+        examples:
+          Page1:
+            value: 1
+            summary: Page 1
+          Page2:
+            value: 2
+            summary: Page 2
       - name: page_size
         required: false
         in: query
@@ -310,37 +331,65 @@ paths:
         name: search_code
         schema:
           type: string
+        description: Search snippets by code content (case-insensitive)
+        examples:
+          SearchCode:
+            value: print
+            summary: Search Code
       - in: query
         name: search_title
         schema:
           type: string
+        description: Search snippets by title (case-insensitive)
+        examples:
+          SearchTitle:
+            value: hello world
+            summary: Search Title
       tags:
-      - snippets
+      - Snippets
       security:
       - jwtAuth: []
       - cookieAuth: []
       - {}
       responses:
         '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/PaginatedSnippetList'
-          description: ''
+          description: Snippets retrieved successfully
+        '401':
+          description: Authentication required
     post:
       operationId: snippets_create
-      description: |-
-        This ViewSet automatically provides `list`, `create`, `retrieve`,
-        `update` and `destroy` actions.
-
-        Additionally we also provide an extra `highlight` action.
+      description: Create a new code snippet. The snippet will be automatically associated
+        with the authenticated user.
+      summary: Create Snippet
       tags:
-      - snippets
+      - Snippets
       requestBody:
         content:
           application/json:
             schema:
               $ref: '#/components/schemas/SnippetRequest'
+            examples:
+              ValidSnippet:
+                value:
+                  title: Hello World in Python
+                  code: print('Hello, World!')
+                  linenos: false
+                  language: python
+                  style: friendly
+                summary: Valid Snippet
+                description: Example of valid snippet data
+              JavaScriptSnippet:
+                value:
+                  title: JavaScript Function
+                  code: |-
+                    function greet(name) {
+                        return `Hello, ${name}!`;
+                    }
+                  linenos: true
+                  language: javascript
+                  style: monokai
+                summary: JavaScript Snippet
+                description: Example of JavaScript snippet with line numbers
           application/x-www-form-urlencoded:
             schema:
               $ref: '#/components/schemas/SnippetRequest'
@@ -353,19 +402,16 @@ paths:
       - cookieAuth: []
       responses:
         '201':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Snippet'
-          description: ''
+          description: Snippet created successfully
+        '400':
+          description: Invalid snippet data
+        '401':
+          description: Authentication required
   /snippets/{id}/:
     get:
       operationId: snippets_retrieve
-      description: |-
-        This ViewSet automatically provides `list`, `create`, `retrieve`,
-        `update` and `destroy` actions.
-
-        Additionally we also provide an extra `highlight` action.
+      description: Retrieve a specific code snippet by ID.
+      summary: Get Snippet
       parameters:
       - in: path
         name: id
@@ -374,25 +420,21 @@ paths:
         description: A unique integer value identifying this snippet.
         required: true
       tags:
-      - snippets
+      - Snippets
       security:
       - jwtAuth: []
       - cookieAuth: []
       - {}
       responses:
         '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Snippet'
-          description: ''
+          description: Snippet retrieved successfully
+        '404':
+          description: Resource not found
     put:
       operationId: snippets_update
-      description: |-
-        This ViewSet automatically provides `list`, `create`, `retrieve`,
-        `update` and `destroy` actions.
-
-        Additionally we also provide an extra `highlight` action.
+      description: Update an existing code snippet. Only the snippet owner can update
+        it.
+      summary: Update Snippet
       parameters:
       - in: path
         name: id
@@ -401,12 +443,22 @@ paths:
         description: A unique integer value identifying this snippet.
         required: true
       tags:
-      - snippets
+      - Snippets
       requestBody:
         content:
           application/json:
             schema:
               $ref: '#/components/schemas/SnippetRequest'
+            examples:
+              UpdateSnippet:
+                value:
+                  title: Updated Hello World
+                  code: print('Hello, Updated World!')
+                  linenos: true
+                  language: python
+                  style: friendly
+                summary: Update Snippet
+                description: Example of snippet update data
           application/x-www-form-urlencoded:
             schema:
               $ref: '#/components/schemas/SnippetRequest'
@@ -419,18 +471,20 @@ paths:
       - cookieAuth: []
       responses:
         '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Snippet'
-          description: ''
+          description: Snippet updated successfully
+        '400':
+          description: Invalid snippet data
+        '401':
+          description: Authentication required
+        '403':
+          description: Permission denied
+        '404':
+          description: Resource not found
     patch:
       operationId: snippets_partial_update
-      description: |-
-        This ViewSet automatically provides `list`, `create`, `retrieve`,
-        `update` and `destroy` actions.
-
-        Additionally we also provide an extra `highlight` action.
+      description: Update an existing code snippet. Only the snippet owner can update
+        it.
+      summary: Update Snippet
       parameters:
       - in: path
         name: id
@@ -439,12 +493,22 @@ paths:
         description: A unique integer value identifying this snippet.
         required: true
       tags:
-      - snippets
+      - Snippets
       requestBody:
         content:
           application/json:
             schema:
               $ref: '#/components/schemas/PatchedSnippetRequest'
+            examples:
+              UpdateSnippet:
+                value:
+                  title: Updated Hello World
+                  code: print('Hello, Updated World!')
+                  linenos: true
+                  language: python
+                  style: friendly
+                summary: Update Snippet
+                description: Example of snippet update data
           application/x-www-form-urlencoded:
             schema:
               $ref: '#/components/schemas/PatchedSnippetRequest'
@@ -456,18 +520,19 @@ paths:
       - cookieAuth: []
       responses:
         '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Snippet'
-          description: ''
+          description: Snippet updated successfully
+        '400':
+          description: Invalid snippet data
+        '401':
+          description: Authentication required
+        '403':
+          description: Permission denied
+        '404':
+          description: Resource not found
     delete:
       operationId: snippets_destroy
-      description: |-
-        This ViewSet automatically provides `list`, `create`, `retrieve`,
-        `update` and `destroy` actions.
-
-        Additionally we also provide an extra `highlight` action.
+      description: Delete a code snippet. Only the snippet owner can delete it.
+      summary: Delete Snippet
       parameters:
       - in: path
         name: id
@@ -476,21 +541,24 @@ paths:
         description: A unique integer value identifying this snippet.
         required: true
       tags:
-      - snippets
+      - Snippets
       security:
       - jwtAuth: []
       - cookieAuth: []
       responses:
         '204':
-          description: No response body
+          description: Snippet deleted successfully
+        '401':
+          description: Authentication required
+        '403':
+          description: Permission denied
+        '404':
+          description: Resource not found
   /snippets/{id}/highlight/:
     get:
       operationId: snippets_highlight_retrieve
-      description: |-
-        This ViewSet automatically provides `list`, `create`, `retrieve`,
-        `update` and `destroy` actions.
-
-        Additionally we also provide an extra `highlight` action.
+      description: Get syntax-highlighted HTML representation of a code snippet.
+      summary: Highlight Snippet
       parameters:
       - in: path
         name: id
@@ -499,45 +567,51 @@ paths:
         description: A unique integer value identifying this snippet.
         required: true
       tags:
-      - snippets
+      - Snippets
       security:
       - jwtAuth: []
       - cookieAuth: []
       - {}
       responses:
         '200':
-          content:
-            text/html:
-              schema:
-                $ref: '#/components/schemas/Snippet'
-          description: ''
+          description: Highlighted snippet HTML
+        '404':
+          description: Resource not found
   /users/:
     get:
       operationId: users_list
-      description: This viewset automatically provides `list` and `retrieve` actions.
+      description: Retrieve a paginated list of users. Only authenticated users can
+        access this endpoint.
+      summary: List Users
       parameters:
-      - name: page
-        required: false
-        in: query
-        description: A page number within the paginated result set.
+      - in: query
+        name: page
         schema:
           type: integer
+        description: Page number for pagination
+        examples:
+          Page1:
+            value: 1
+            summary: Page 1
+          Page2:
+            value: 2
+            summary: Page 2
       tags:
-      - users
+      - Users
       security:
       - jwtAuth: []
       - cookieAuth: []
       responses:
         '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/PaginatedUserList'
-          description: ''
+          description: Users retrieved successfully
+        '401':
+          description: Authentication required
   /users/{id}/:
     get:
       operationId: users_retrieve
-      description: This viewset automatically provides `list` and `retrieve` actions.
+      description: Retrieve a specific user by ID. Only authenticated users can access
+        this endpoint.
+      summary: Get User
       parameters:
       - in: path
         name: id
@@ -546,17 +620,17 @@ paths:
         description: A unique integer value identifying this user.
         required: true
       tags:
-      - users
+      - Users
       security:
       - jwtAuth: []
       - cookieAuth: []
       responses:
         '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/User'
-          description: ''
+          description: User retrieved successfully
+        '401':
+          description: Authentication required
+        '404':
+          description: Resource not found
 components:
   schemas:
     LanguageEnum:
@@ -1753,52 +1827,6 @@ components:
         * `zephir` - Zephir
         * `zig` - Zig
         * `zone` - Zone
-    PaginatedSnippetList:
-      type: object
-      required:
-      - count
-      - results
-      properties:
-        count:
-          type: integer
-          example: 123
-        next:
-          type: string
-          nullable: true
-          format: uri
-          example: http://api.example.org/accounts/?page=4
-        previous:
-          type: string
-          nullable: true
-          format: uri
-          example: http://api.example.org/accounts/?page=2
-        results:
-          type: array
-          items:
-            $ref: '#/components/schemas/Snippet'
-    PaginatedUserList:
-      type: object
-      required:
-      - count
-      - results
-      properties:
-        count:
-          type: integer
-          example: 123
-        next:
-          type: string
-          nullable: true
-          format: uri
-          example: http://api.example.org/accounts/?page=4
-        previous:
-          type: string
-          nullable: true
-          format: uri
-          example: http://api.example.org/accounts/?page=2
-        results:
-          type: array
-          items:
-            $ref: '#/components/schemas/User'
     PatchedSnippetRequest:
       type: object
       properties:
@@ -1861,45 +1889,6 @@ components:
       - password
       - password2
       - username
-    Snippet:
-      type: object
-      properties:
-        url:
-          type: string
-          format: uri
-          readOnly: true
-        id:
-          type: integer
-          readOnly: true
-        highlight:
-          type: string
-          format: uri
-          readOnly: true
-        owner:
-          type: string
-          readOnly: true
-        title:
-          type: string
-          maxLength: 100
-        code:
-          type: string
-        linenos:
-          type: boolean
-        language:
-          $ref: '#/components/schemas/LanguageEnum'
-        style:
-          $ref: '#/components/schemas/StyleEnum'
-        created:
-          type: string
-          format: date-time
-          readOnly: true
-      required:
-      - code
-      - created
-      - highlight
-      - id
-      - owner
-      - url
     SnippetRequest:
       type: object
       properties:
@@ -2019,30 +2008,6 @@ components:
         * `vs` - vs
         * `xcode` - xcode
         * `zenburn` - zenburn
-    User:
-      type: object
-      properties:
-        url:
-          type: string
-          format: uri
-          readOnly: true
-        id:
-          type: integer
-          readOnly: true
-        username:
-          type: string
-          maxLength: 150
-        snippets:
-          type: array
-          items:
-            type: string
-            format: uri
-          readOnly: true
-      required:
-      - id
-      - snippets
-      - url
-      - username
     UserRequest:
       type: object
       properties:

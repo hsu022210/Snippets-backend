@@ -53,14 +53,14 @@ class RegistrationTests(TestCase):
         data = {
             'username': 'invaliduser',
             'email': 'invalid@example.com',
-            'password': 'password1',
-            'password2': 'password2'  # Mismatched passwords
+            'password': 'SecurePassword123!',
+            'password2': 'DifferentPassword123!'  # Mismatched passwords
         }
         
         response = self.client.post(self.url, data, format='json')
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertIn('detail', response.data)
-        self.assertIn('password', response.data['detail'])
+        self.assertIn('password', response.data)
+        self.assertIn('password2', response.data)
 
     def test_register_missing_required_fields(self):
         """Test registration with missing required fields."""
@@ -72,9 +72,8 @@ class RegistrationTests(TestCase):
         
         response = self.client.post(self.url, data, format='json')
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertIn('detail', response.data)
-        self.assertIn('email', response.data['detail'])
-        self.assertIn('password2', response.data['detail'])
+        self.assertIn('email', response.data)
+        self.assertIn('password2', response.data)
 
     def test_register_duplicate_email(self):
         """Test registration with duplicate email."""
@@ -94,8 +93,7 @@ class RegistrationTests(TestCase):
         
         response = self.client.post(self.url, data, format='json')
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertIn('detail', response.data)
-        self.assertIn('email', response.data['detail'])
+        self.assertIn('email', response.data)
 
     def test_register_duplicate_username(self):
         """Test registration with duplicate username."""
@@ -115,8 +113,7 @@ class RegistrationTests(TestCase):
         
         response = self.client.post(self.url, data, format='json')
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertIn('detail', response.data)
-        self.assertIn('username', response.data['detail'])
+        self.assertIn('username', response.data)
 
     def test_register_with_optional_fields(self):
         """Test registration with optional first_name and last_name fields."""

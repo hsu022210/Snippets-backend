@@ -104,23 +104,6 @@ class RegisterView(generics.CreateAPIView, AuthenticationMixin):
     serializer_class = RegisterSerializer
     renderer_classes = [JSONRenderer]
 
-    def create(self, request, *args, **kwargs):
-        """Handle user registration with proper error handling."""
-        try:
-            response = super().create(request, *args, **kwargs)
-            return self.create_success_response({
-                "message": "User registered successfully",
-                "user": response.data
-            }, status.HTTP_201_CREATED)
-        except serializers.ValidationError as e:
-            return Response({"detail": e.detail}, status=status.HTTP_400_BAD_REQUEST)
-        except Exception as e:
-            logger.error(f"Registration failed: {str(e)}", exc_info=True)
-            return Response(
-                {"detail": "Registration failed. Please try again."},
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR
-            )
-
     def perform_create(self, serializer):
         """Create user and send welcome email."""
         user = serializer.save()

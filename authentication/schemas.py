@@ -47,12 +47,35 @@ REGISTER_SCHEMA = extend_schema(
             description="Invalid registration data",
             examples=[
                 OpenApiExample(
-                    "Validation Error",
+                    "Validation Error - Missing Fields",
                     value={
-                        "detail": {
-                            "email": ["This field is required."],
-                            "username": ["This field must be unique."]
-                        }
+                        "email": ["Email is required"],
+                        "password2": ["Please confirm your password"]
+                    }
+                ),
+                OpenApiExample(
+                    "Validation Error - Duplicate Email",
+                    value={
+                        "email": ["This email is already registered. Please use a different email address."]
+                    }
+                ),
+                OpenApiExample(
+                    "Validation Error - Duplicate Username",
+                    value={
+                        "username": ["This username is already taken. Please choose a different username."]
+                    }
+                ),
+                OpenApiExample(
+                    "Validation Error - Password Mismatch",
+                    value={
+                        "password": ["Password fields didn't match."],
+                        "password2": ["Password fields didn't match."]
+                    }
+                ),
+                OpenApiExample(
+                    "Validation Error - Weak Password",
+                    value={
+                        "password": ["This password is too common."]
                     }
                 )
             ]
@@ -74,6 +97,7 @@ REGISTER_SCHEMA = extend_schema(
                 "username": "john_doe",
                 "email": "john@example.com",
                 "password": "securepassword123",
+                "password2": "securepassword123",
                 "first_name": "John",
                 "last_name": "Doe"
             },
