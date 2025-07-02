@@ -2,11 +2,10 @@ import os
 import logging
 from typing import Dict, Any, Optional
 
-from rest_framework import generics, permissions, status, serializers
+from rest_framework import generics, permissions, status
 from rest_framework.response import Response
 from django.contrib.auth import get_user_model
 from .serializers import UserSerializer, RegisterSerializer
-from rest_framework.views import APIView
 from .utils import send_welcome_email
 from django_rest_passwordreset.views import ResetPasswordRequestToken, ResetPasswordConfirm
 from django_rest_passwordreset.models import ResetPasswordToken
@@ -15,7 +14,6 @@ from django.conf import settings
 from django.template.loader import render_to_string
 from django.utils.html import strip_tags
 from rest_framework_simplejwt.tokens import RefreshToken
-from rest_framework import serializers
 from rest_framework.renderers import JSONRenderer
 from .schemas import (
     REGISTER_SCHEMA,
@@ -132,7 +130,7 @@ class UserDetailView(generics.RetrieveUpdateAPIView):
 
 
 @LOGOUT_SCHEMA
-class LogoutView(APIView, AuthenticationMixin):
+class LogoutView(generics.GenericAPIView, AuthenticationMixin):
     """View for user logout."""
     
     permission_classes = (permissions.IsAuthenticated,)
@@ -151,7 +149,7 @@ class LogoutView(APIView, AuthenticationMixin):
 
 
 @LOGIN_SCHEMA
-class CustomLoginView(APIView, AuthenticationMixin):
+class CustomLoginView(generics.GenericAPIView, AuthenticationMixin):
     """View for user login with JWT token generation."""
     
     permission_classes = (permissions.AllowAny,)
