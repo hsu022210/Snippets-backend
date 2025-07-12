@@ -22,6 +22,11 @@ from .schemas import (
     USER_LIST_SCHEMA,
     USER_DETAIL_SCHEMA,
 )
+from django.core.mail import send_mail, BadHeaderError
+from .serializers import ContactSerializer
+from rest_framework.permissions import AllowAny
+from django.template.loader import render_to_string
+from django.utils.html import strip_tags
 
 User = get_user_model()
 
@@ -210,6 +215,42 @@ class UserViewSet(viewsets.ReadOnlyModelViewSet):
     def retrieve(self, request, *args, **kwargs):
         """Retrieve a specific user by ID."""
         return super().retrieve(request, *args, **kwargs)
+
+class ContactAPIView(APIView):
+    permission_classes = [AllowAny]
+
+    def post(self, request, *args, **kwargs):
+        serializer = ContactSerializer(data=request.data)
+        if serializer.is_valid():
+            name = serializer.validated_data['name']
+            email = serializer.validated_data['email']
+            subject = serializer.validated_data['subject']
+            message = serializer.validated_data['message']
+
+            # Render HTML email template
+            html_message = render_to_string('snippets/contact_email.html', {
+                'name': name,
+                'email': email,
+                'subject': subject,
+                'message': message,
+            })
+            plain_message = strip_tags(html_message)
+
+            try:
+                send_mail(
+                    subject=subject,
+                    message=plain_message,
+                    from_email=None,  # Use DEFAULT_FROM_EMAIL
+                    recipient_list=["alechsu83@gmail.com"],
+                    html_message=html_message,
+                    fail_silently=False,
+                )
+                return Response({"detail": "Message sent successfully."}, status=200)
+            except BadHeaderError:
+                return Response({"detail": "Invalid header found."}, status=400)
+            except Exception as e:
+                return Response({"detail": f"Failed to send email: {str(e)}"}, status=500)
+        return Response(serializer.errors, status=400)
 
 # class UserList(generics.ListAPIView):
 #     queryset = User.objects.all()

@@ -7,6 +7,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from .models import Snippet
 from unittest.mock import patch
 from datetime import datetime, timedelta
+from django.urls import reverse
 
 User = get_user_model()
 
@@ -778,3 +779,48 @@ class SnippetModelTests(TestCase):
         self.assertEqual(snippet.title, '')
         # Django's default string representation doesn't depend on title
         self.assertEqual(str(snippet), f'Snippet object ({snippet.id})')
+
+
+class ContactEndpointTests(TestCase):
+    def setUp(self):
+        self.client = APIClient()
+        self.url = reverse('contact')
+
+    @patch('snippets.views.send_mail')
+    def test_contact_valid_submission(self, mock_send_mail):
+        data = {
+            'name': 'Test User',
+            'email': 'test@example.com',
+            'subject': 'Test Subject',
+            'message': 'Hello, this is a test.'
+        }
+        mock_send_mail.return_value = 1
+        response = self.client.post(self.url, data, format='json')
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('detail', response.data)
+        mock_send_mail.assert_called_once()
+
+    def test_contact_missing_fields(self):
+        data = {
+            'name': '',
+            'email': '',
+            'subject': '',
+            'message': ''
+        }
+        response = self.client.post(self.url, data, format='json')
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('name', response.data)
+        self.assertIn('email', response.data)
+        self.assertIn('subject', response.data)
+        self.assertIn('message', response.data)
+
+    def test_contact_invalid_email(self):
+        data = {
+            'name': 'Test User',
+            'email': 'not-an-email',
+            'subject': 'Test',
+            'message': 'Test message'
+        }
+        response = self.client.post(self.url, data, format='json')
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('email', response.data)
