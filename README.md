@@ -15,6 +15,7 @@ A robust Django REST API for managing and sharing code snippets with syntax high
 - **Filtering**: Advanced filtering capabilities for snippets
 - **CORS Support**: Cross-origin resource sharing enabled for frontend integration
 - **Production Ready**: Configured for deployment with Gunicorn and PostgreSQL
+- **Contact Form**: Users can send messages via the contact form, which are emailed to the site owner
 
 ## 🛠️ Tech Stack
 
@@ -126,6 +127,12 @@ The API will be available at `http://localhost:8000/`
 | `/users/` | GET | List all users |
 | `/users/{id}/` | GET | Get user details |
 
+### Contact Endpoint
+
+| Endpoint      | Method | Description                        |
+|--------------|--------|------------------------------------|
+| `/contact/`  | POST   | Send a contact message to the site owner |
+
 ### Example API Usage
 
 #### Register a User
@@ -160,6 +167,18 @@ curl -X POST http://localhost:8000/snippets/ \
     "language": "python",
     "style": "friendly",
     "linenos": true
+  }'
+```
+
+#### Send a Contact Message
+```bash
+curl -X POST http://localhost:8000/contact/ \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "John Doe",
+    "email": "john@example.com",
+    "subject": "Inquiry",
+    "message": "Hello, I have a question about your site."
   }'
 ```
 
