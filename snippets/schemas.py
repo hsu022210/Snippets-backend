@@ -5,7 +5,7 @@ This module contains all the schema decorators and examples for better code orga
 
 from drf_spectacular.utils import extend_schema, OpenApiExample, OpenApiResponse, OpenApiParameter
 from rest_framework import status
-from .serializers import SnippetSerializer, UserSerializer
+from .serializers import SnippetSerializer, UserSerializer, ContactSerializer
 
 # Common response examples
 UNAUTHORIZED_RESPONSE = OpenApiResponse(
@@ -395,4 +395,64 @@ USER_DETAIL_SCHEMA = extend_schema(
         401: UNAUTHORIZED_RESPONSE,
         404: NOT_FOUND_RESPONSE
     }
+)
+
+# Contact endpoint schemas
+CONTACT_SCHEMA = extend_schema(
+    tags=["Contact"],
+    summary="Contact Form Submission",
+    description="Send a contact message to the site owner via email.",
+    request=ContactSerializer,
+    responses={
+        200: OpenApiResponse(
+            description="Message sent successfully",
+            examples=[
+                OpenApiExample(
+                    "Success",
+                    value={"detail": "Message sent successfully."}
+                )
+            ]
+        ),
+        400: OpenApiResponse(
+            description="Invalid input data",
+            examples=[
+                OpenApiExample(
+                    "Validation Error",
+                    value={
+                        "name": ["This field is required."],
+                        "email": ["Enter a valid email address."]
+                    }
+                )
+            ]
+        ),
+        500: OpenApiResponse(
+            description="Internal server error",
+            examples=[
+                OpenApiExample(
+                    "Email Error",
+                    value={"detail": "Failed to send email: SMTP connection failed"}
+                )
+            ]
+        )
+    },
+    examples=[
+        OpenApiExample(
+            "General Inquiry",
+            value={
+                "name": "John Doe",
+                "email": "john@example.com",
+                "subject": "General Inquiry",
+                "message": "Hello, I have a question about your platform."
+            }
+        ),
+        OpenApiExample(
+            "Bug Report",
+            value={
+                "name": "Jane Smith",
+                "email": "jane@company.com",
+                "subject": "Bug Report",
+                "message": "I found a bug in the syntax highlighting feature."
+            }
+        )
+    ]
 ) 

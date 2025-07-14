@@ -21,6 +21,7 @@ from .schemas import (
     SNIPPET_HIGHLIGHT_SCHEMA,
     USER_LIST_SCHEMA,
     USER_DETAIL_SCHEMA,
+    CONTACT_SCHEMA,
 )
 from django.core.mail import send_mail, BadHeaderError
 from .serializers import ContactSerializer
@@ -219,6 +220,7 @@ class UserViewSet(viewsets.ReadOnlyModelViewSet):
 class ContactAPIView(APIView):
     permission_classes = [AllowAny]
 
+    @CONTACT_SCHEMA
     def post(self, request, *args, **kwargs):
         serializer = ContactSerializer(data=request.data)
         if serializer.is_valid():
