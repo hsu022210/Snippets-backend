@@ -33,8 +33,6 @@ CORS_ALLOWED_ORIGINS = [
 
 #     STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
-STATICFILES_DIRS = [os.path.join(BASE_DIR, "static")]
-
 STORAGES = {
     "default":{
         "BACKEND" : "django.core.files.storage.FileSystemStorage",
