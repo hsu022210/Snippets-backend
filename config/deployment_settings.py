@@ -43,9 +43,30 @@ STORAGES = {
 
 }
 
+# DATABASES = {
+#     'default': dj_database_url.config(
+#         default= os.environ.get('DATABASE_URL'), 
+#         conn_max_age=600
+#     )
+# }
+
+# Database
+# https://docs.djangoproject.com/en/5.1/ref/settings/#databases
+
+# Set default values for the environment variables if they’re not already set
+os.environ.setdefault("PGDATABASE", "liftoff_dev")
+os.environ.setdefault("PGUSER", "username")
+os.environ.setdefault("PGPASSWORD", "")
+os.environ.setdefault("PGHOST", "localhost")
+os.environ.setdefault("PGPORT", "5432")
+
 DATABASES = {
-    'default': dj_database_url.config(
-        default= os.environ.get('DATABASE_URL'), 
-        conn_max_age=600
-    )
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': os.environ["PGDATABASE"],
+        'USER': os.environ["PGUSER"],
+        'PASSWORD': os.environ["PGPASSWORD"],
+        'HOST': os.environ["PGHOST"],
+        'PORT': os.environ["PGPORT"],
+    }
 }
